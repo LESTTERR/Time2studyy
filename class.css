@@ -139,36 +139,11 @@
 }
 
 /* ========== Schedule Card ========== */
-.schedule-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  padding: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: var(--shadow);
-  border: var(--border);
-  transition: transform 0.3s ease;
-  position: relative;
-}
-
-.schedule-card:hover {
-  transform: translateY(-4px);
-}
-
-.schedule-card h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
 /* ========== Schedule Items ========== */
 .schedule-list .schedule-item,
 .class-item {
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(245, 245, 245, 0.9));
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 1rem;
   box-shadow: var(--shadow);
@@ -200,18 +175,18 @@
   font-size: 1.2rem;
   font-weight: 800;  /* Extra bold */
   margin: 0 0 4px 0;
-  color: var(--text);
+  color:  rgb(0, 153, 213)s;
 }
 
 .schedule-item .details p {
   font-size: 0.95rem;
-  color: #666;
+  color: #ffffff;
   margin: 0;
 }
 
 .schedule-item .time {
   font-weight: 700;
-  color: var(--secondary);
+  color: white;
   min-width: 90px;
 }
 

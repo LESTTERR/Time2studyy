@@ -8,8 +8,10 @@
   <title>Study Planner – Home</title>
   <link rel="stylesheet" href="gome.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="tasks.css">
-  <link rel="stylesheet" href="class.css">
+
+  <link rel="stylesheet" href="task.css">
+  
+   <link rel="stylesheet" href="classcard.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -110,7 +112,7 @@ gap: 10px;
   background: none;
   border: none;
   cursor: pointer;
-  color: #2f3dff;
+  color: #3d8fcd;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,17 +209,6 @@ gap: 10px;
 
 
 
-   
-
-    <div class="fab-container">
-      <button class="fab-main material-icons" id="fabMain">add</button>
-      <div class="fab-options">
-        <a href="add-task.html" class="fab-option"><span class="material-icons">assignment</span></a>
-        <a href="add-class.html" class="fab-option"><span class="material-icons">school</span></a>
-      </div>
-    </div>
-  </div>
-
   <nav class="tab-bar" style="display: none;">
     <button class="tab-item active" data-target="homeSection"><span class="material-icons">calendar_today</span><span
         class="tab-label">Home</span></button>
@@ -235,8 +226,7 @@ gap: 10px;
 
   <script type="module" src="firebase-init.js"></script>
 
-  // fix3home.html
-// ... (other code) ...
+
 
   <script type="module">
     import { db, auth } from "./firebase-init.js";
@@ -257,8 +247,14 @@ gap: 10px;
         document.getElementById('loadingScreen').style.display = 'none';
         document.querySelector('.app-container').style.display = 'block';
         document.querySelector('.tab-bar').style.display = 'flex';
-        document.querySelector('.fab-container').style.display = 'block';
-        document.getElementById('chatbot-fab').style.display = 'flex';
+
+
+
+        // guard the removed FAB element so script won't throw if it's gone
+        const fabContainer = document.querySelector('.fab-container');
+        if (fabContainer) fabContainer.style.display = 'block';
+        const chatbotFab = document.getElementById('chatbot-fab');
+        if (chatbotFab) chatbotFab.style.display = 'flex';
       } else {
         window.location.href = 'login.html';
       }
@@ -372,7 +368,6 @@ gap: 10px;
         orderBy('dueDate')
       );
       // ... (rest of the function)
-// Rest of your loadPendingTasks function...
   return new Promise((resolve) => {
     let first = true;
     onSnapshot(q, (snapshot) => {
@@ -725,49 +720,56 @@ gap: 10px;
 
   </script>
 
-  // ... (rest of your HTML and other script tags) ...
   <script>
+  const loadingScreen = document.getElementById('loadingScreen');
+  const tabBar = document.querySelector('.tab-bar');
 
-    const loadingScreen = document.getElementById('loadingScreen');
-    const tabBar = document.querySelector('.tab-bar');
+  // New behavior:
+  // - First-ever visit (no session flag): show loader for 2s then set 'done'
+  // - After a login redirect we set 'loggedIn'='true' and this code will show loader for 2s
+  // - If flag is 'done' or anything else, skip loader and show UI immediately
+  const flag = sessionStorage.getItem('loggedIn');
 
-    if (sessionStorage.getItem('loggedIn') === 'true') {
-      // First time after login — show loader for 2s
-      setTimeout(() => {
-        if (loadingScreen) loadingScreen.style.display = 'none';
-        if (tabBar) tabBar.style.display = 'flex';
-        // Prevent loader from showing again
-        sessionStorage.setItem('loggedIn', 'done');
-      }, 2000);
-    } else {
-      // Already logged in before — skip loader
+  if (flag === 'true') {
+    // short animation after login redirect
+    setTimeout(() => {
       if (loadingScreen) loadingScreen.style.display = 'none';
       if (tabBar) tabBar.style.display = 'flex';
-    }
-
+      sessionStorage.setItem('loggedIn', 'done');
+    }, 2000);
+  } else if (!flag) {
+    // first-time visit: show loader once
+    setTimeout(() => {
+      if (loadingScreen) loadingScreen.style.display = 'none';
+      if (tabBar) tabBar.style.display = 'flex';
+      sessionStorage.setItem('loggedIn', 'done'); // mark that we've shown it
+    }, 2000);
+  } else {
+    // already shown earlier — skip loader
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    if (tabBar) tabBar.style.display = 'flex';
+  }
   </script>
-  <div id="chatbot-fab"
-    style="display:none;position:fixed;bottom:49px;right:32px;z-index:9999;cursor:pointer;align-items:center;justify-content:center;width:98px;height:75px;background:rgba(255,255,255,0.95);border-radius:50%;">
-    <span class="material-icons" style="color:#27c2ed;font-size:45px;">smart_toy</span>
-  </div>
-  <div id="chatbot-window"
-    style="display:none;position:fixed;bottom:104px;right:32px;width:340px;max-width:95vw;background:#fff;border-radius:18px;box-shadow:0 8px 32px rgba(30,60,114,0.18);overflow:hidden;z-index:10000;flex-direction:column;">
-    <div
-      style="background:#2f3dff;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-weight:600;font-size:1.1rem;">T2S Chatbot</span>
-      <span id="chatbot-close" class="material-icons" style="cursor:pointer;">close</span>
-    </div>
-    <div id="messages" style="padding:16px;height:260px;overflow-y:auto;background:#f7fafd;font-size:0.98rem;"></div>
-    <div style="display:flex;align-items:center;padding:12px 16px;border-top:1px solid #eee;background:#fafbfc;">
-      <input id="userInput" type="text" placeholder="Type a message..."
-        style="flex:1;padding:8px 12px;border-radius:16px;border:1px solid #ddd;outline:none;font-size:1rem;">
-      <button id="chatbot-send"
-        style="margin-left:8px;background:#2196F3;border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-        <span class="material-icons" style="color:#fff;">send</span>
-      </button>
-    </div>
+ <div id="chatbot-fab">
+  <span class="material-icons">smart_toy</span>
+</div>
+
+<!-- ensure chat window is hidden by default -->
+<div id="chatbot-window" style="display:none;">
+  <div id="chatbot-header">
+    <span style="font-weight:600;font-size:1.1rem;">T2S Chatbot</span>
+    <span id="chatbot-close" class="material-icons">close</span>
   </div>
 
+  <div id="messages"></div>
+
+  <div id="chatbot-input-section">
+    <input id="userInput" type="text" placeholder="Type a message...">
+    <button id="chatbot-send">
+      <span class="material-icons">send</span>
+    </button>
+  </div>
+</div>
 
   <script>
     const fab = document.getElementById('chatbot-fab');
@@ -829,13 +831,23 @@ gap: 10px;
       }
     }
 
+  
     function addMessage(sender, text) {
-      const msg = document.createElement('div');
-      msg.className = sender;
-      msg.textContent = text;
-      messages.appendChild(msg);
-      messages.scrollTop = messages.scrollHeight;
-    }
+  const msg = document.createElement('div');
+
+  if (sender === 'user') {
+    msg.className = 'user-message';
+  } else {
+    msg.className = 'bot-message';
+  }
+
+  msg.textContent = text;
+  messages.appendChild(msg);
+
+  // auto scroll
+  messages.scrollTop = messages.scrollHeight;
+}
+
   </script>
 
 <div id="alertBoxContainer" style="position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;"></div>

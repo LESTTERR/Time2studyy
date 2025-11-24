@@ -330,6 +330,86 @@ footer {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== Dark mode overrides ===== */
+body.dark {
+    background: linear-gradient(0deg, rgba(2,6,23,0.85), rgba(2,6,23,0.65)), url('blue.jpg') no-repeat center center;
+    background-size: cover;
+    color: #e6eef8;
+}
+
+/* header / nav */
+body.dark header {
+    background-color: #071124;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+body.dark .logo-text { color: #93c5fd; }
+body.dark nav a { color: #cbd5e0; }
+body.dark nav a:hover { color: #93c5fd; }
+
+/* hero */
+body.dark .hero h1,
+body.dark .hero p {
+    color: #e6eef8;
+}
+
+/* features section background */
+body.dark .features {
+    background-color: transparent;
+}
+
+/* feature cards */
+body.dark .feature-card {
+    background: rgba(255,255,255,0.03); /* subtle card */
+    border: 1px solid rgba(255,255,255,0.04);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    color: #e6eef8;
+}
+body.dark .feature-title { color: #e6eef8; }
+body.dark .feature-desc { color: #cbd5e0; }
+body.dark .feature-icon { color: #93c5fd; }
+
+/* screenshots: avoid bright white blocks in dark mode */
+body.dark .screenshot {
+    background: rgba(255,255,255,0.02);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.03);
+    padding: 6px;
+}
+
+/* buttons */
+body.dark .cta-button {
+    background: #2563eb;
+    color: #ffffff;
+}
+body.dark .secondary-button {
+    background: transparent;
+    color: #93c5fd;
+    border: 1px solid rgba(147,197,253,0.15);
+}
+
+/* footer */
+body.dark footer {
+    background-color: #021023;
+    color: #9aaaba;
+}
+body.dark .footer-column h3 { color: #93c5fd; }
+body.dark .footer-column a { color: #9aaaba; }
+body.dark .copyright { color: #718096; }
+
+/* misc text elements to ensure contrast */
+body.dark h1, body.dark h2, body.dark h3, body.dark h4,
+body.dark p, body.dark li, body.dark span, body.dark .section-title,
+body.dark .footer-column p {
+    color: #e6eef8;
+}
+
+/* form fields (if present) */
+body.dark input, body.dark textarea, body.dark select {
+    background: #061022;
+    color: #e6eef8;
+    border: 1px solid rgba(255,255,255,0.04);
+}
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -347,6 +427,9 @@ footer {
                 <li><a href="login.html" class="cta-button">Login</a></li>
             </ul>
         </nav>
+
+        <!-- Dark mode toggle -->
+        <button id="theme-toggle" class="cta-button secondary-button" aria-label="Toggle dark mode">🌙</button>
     </header>
 
     <section class="hero">
@@ -508,5 +591,29 @@ footer {
   });
 </script>
 
+<!-- Theme toggle script -->
+<script>
+(function() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const saved = localStorage.getItem('theme');
+  const isDark = saved ? saved === 'dark' : prefersDark;
+
+  if (isDark) {
+    document.body.classList.add('dark');
+    btn.textContent = '☀️';
+  } else {
+    btn.textContent = '🌙';
+  }
+
+  btn.addEventListener('click', () => {
+    const dark = document.body.classList.toggle('dark');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    btn.textContent = dark ? '☀️' : '🌙';
+  });
+})();
+</script>
 </body>
 </html>

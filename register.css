@@ -1,0 +1,138 @@
+
+    :root {
+      --sky-blue: #87CEEB;
+      --dark-blue: #1E3C72;
+      --text-color: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #0f1a34, rgb(54, 68, 101));
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+    }
+
+    .auth-card {
+   
+    background: rgb(25, 25, 33);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.819);
+      width: 100%;
+      max-width: 400px;
+      margin: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo img {
+      max-width: 150px;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .auth-card h2 {
+      color: var(--text-color);
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    #registerForm {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    input {
+      padding: 0.8rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      width: 100%;
+      background: white;
+      color: var(--text-color);
+      transition: all 0.3s ease;
+    }
+
+    input::placeholder {
+      color: #506483
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--dark-blue);
+      box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.2);
+    }
+
+    button {
+      padding: 0.8rem;
+      background: var(--dark-blue);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 0.5rem;
+    }
+
+
+    button:hover {
+      background: #152852;
+      transform: scale(1.02);
+    }
+
+    p {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    a {
+      color: #516798;
+      text-decoration: none;
+      font-weight: 600;
+      transition: opacity 0.3s ease;
+    }
+
+    a:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    .input-group {
+      margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 1.5rem;
+        max-width: 320px;
+      }
+      
+      .logo img {
+        max-width: 120px;
+      }
+      
+      input, button {
+        font-size: 16px;
+      }
+    }
