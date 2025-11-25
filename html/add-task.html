@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Task</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(180deg, #87CEEB, #1E3C72);
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 1rem;
+    }
+
+    .form-card {
+      background: var(--card-bg, rgba(255, 255, 255, 0.3));
+      backdrop-filter: blur(12px);
+      border: var(--border, 1px solid #ccc);
+      border-radius: 24px;
+      box-shadow: var(--shadow, 0 4px 12px rgba(0, 0, 0, 0.2));
+      max-width: 400px;
+      width: 100%;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-card h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--text, black);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 480;
+      margin-bottom: 2px;
+      margin-top: 2px;
+      color: black;
+      font-size: 1.1rem;
+    }
+
+    input[type="text"],
+    input[type="datetime-local"],
+    textarea {
+      padding: 0.8rem 1rem;
+      border: 2px solid #333;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.5);
+      font-size: 1rem;
+      color: black;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #999;
+    }
+
+    .type-toggle {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .type-toggle label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .assignment-label {
+      color: green;
+    }
+
+    .project-label {
+      color: red;
+    }
+
+    button[type="submit"] {
+      background: var(--primary, #007bff);
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      padding: 0.8rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background: #1fa4e5;
+    }
+
+    #backTasks {
+      background: none;
+      border: none;
+      color: var(--secondary, #333);
+      font-weight: 500;
+      font-size: 0.95rem;
+      text-align: center;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    #backTasks:hover {
+      color: #473dff;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-card">
+    <h2>Add New Task</h2>
+    <form id="taskForm">
+      <input type="text" id="taskName" placeholder="Task Name" required>
+      <textarea id="taskDesc" placeholder="Description" required></textarea>
+      
+      <label for="taskDateTime">Deadline:</label>
+      <input type="datetime-local" id="taskDateTime" required>
+
+      <label>Task Type:</label>
+      <div class="type-toggle">
+        <label>
+          <input type="radio" name="taskType" value="Assignment" checked>
+          <span class="assignment-label">Assignment</span>
+        </label>
+        <label>
+          <input type="radio" name="taskType" value="Project">
+          <span class="project-label">Project</span>
+        </label>
+      </div>
+
+      <button type="submit">Save Task</button>
+    </form>
+    <button id="backTasks">← Back to Tasks</button>
+  </div>
+
+  <!-- ✅ Firebase Save Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDBZ7tcCJJdGCo7C8FXRiUPQ8OfOzexllc",
+      authDomain: "time2study-4f2f3.firebaseapp.com",
+      databaseURL: "https://time2study-4f2f3-default-rtdb.firebaseio.com",
+      projectId: "time2study-4f2f3",
+      storageBucket: "time2study-4f2f3.firebasestorage.app",
+      messagingSenderId: "856561565211",
+      appId: "1:856561565211:web:e59307f6c4dcb7a52582be",
+      measurementId: "G-9S9C5D6TXF"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('taskForm');
+    const backBtn = document.getElementById('backTasks');
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      backBtn.onclick = () => window.location = 'tasks.html';
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('taskName').value.trim();
+        const desc = document.getElementById('taskDesc').value.trim();
+        const due = document.getElementById('taskDateTime').value;
+        const type = document.querySelector('input[name="taskType"]:checked').value;
+
+        if (!name || !desc || !due) {
+          alert("Please fill in all fields.");
+          return;
+        }
+
+        try {
+          await addDoc(collection(db, "tasks"), {
+            name,
+            description: desc,
+            dueDate: due,
+            type,
+            userId: user.uid,
+            createdAt: new Date().toISOString()
+          });
+          alert("✅ Task saved!");
+          window.location.href = "tasks.html";
+        } catch (err) {
+          console.error("Error saving task:", err);
+          alert("❌ Error saving task. Please try again.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

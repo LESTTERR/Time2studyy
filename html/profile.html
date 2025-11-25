@@ -1,0 +1,341 @@
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Planner – Profile</title>
+  <link rel="stylesheet" href="gome.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="profile.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+
+</head>
+
+<body>
+  <div class="profile-container"   style="display: none;">
+
+
+    <div class="content-section active" id="profileSection">
+      <div class="profile-card">
+
+
+        <div class="profile-header">
+    
+  <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+    <img id="userPhoto" src="pfp.png" alt="Profile Picture" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+<button id="togglePfpOptions" style="position: absolute; bottom: 0; left: -20px; background: #2196F3; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer;">+</button>
+
+<!-- Profile Picture Selection Options -->
+<div id="profileOptions" style="display: none; margin-top: 10px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+  <img src="pfp.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
+  <img src="pfp2.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
+  <img src="pfp3.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
+</div>
+
+<button id="savePfpBtn" style="display: none; margin-top: 8px;">Save Picture</button>
+
+
+</div>
+
+
+
+          <h2 id="userName">Loading...</h2>
+        </div>
+
+        <div class="profile-info">
+          <div class="info-row">
+            <span class="material-icons">email</span>
+            <input type="email" id="userEmail" disabled>
+          </div>
+          <div class="info-row">
+            <span class="material-icons">school</span>
+            <input type="text" id="userSchool" disabled>
+          </div>
+          <div class="info-row">
+            <span class="material-icons">calendar_today</span>
+            <input type="number" id="userAge" disabled>
+          </div>
+        </div>
+
+        <div class="profile-buttons">
+       <button class="logout-btn" id="logoutBtn">Log Out</button>
+          <button class="delete-btn" id="deleteBtn">Delete Account</button>
+        </div>
+      </div>
+    </div></div>
+<div id="profileLoading" style="display:flex;align-items:center;justify-content:center;height:100vh;">
+  <span style="color:#2196F3;font-size:1.2rem;font-weight:500;">loading profile...</span>
+</div>
+
+
+   <nav class="tab-bar">
+  <a href="home.html" class="tab-item">
+    <span class="material-icons">calendar_today</span>
+    <span class="tab-label">Home</span>
+  </a>
+  <a href="tasks.html" class="tab-item">
+    <span class="material-icons">assignment</span>
+    <span class="tab-label">Tasks</span>
+  </a>
+  <a href="classes.html" class="tab-item">
+    <span class="material-icons">school</span>
+    <span class="tab-label">Classes</span>
+  </a>
+  <a href="profile.html" class="tab-item active">
+    <span class="material-icons">person</span>
+    <span class="tab-label">Profile</span>
+  </a>
+</nav>
+
+ 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDBZ7tcCJJdGCo7C8FXRiUPQ8OfOzexllc",
+    authDomain: "time2study-4f2f3.firebaseapp.com",
+    projectId: "time2study-4f2f3",
+    storageBucket: "time2study-4f2f3.appspot.com",
+    messagingSenderId: "856561565211",
+    appId: "1:856561565211:web:e59307f6c4dcb7a52582be",
+    measurementId: "G-9S9C5D6TXF"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const userName = document.getElementById('userName');
+  const userEmail = document.getElementById('userEmail');
+  const userSchool = document.getElementById('userSchool');
+  const userAge = document.getElementById('userAge');
+
+  const setLoadingState = () => {
+    userName.textContent = "Loading...";
+    userEmail.value = "";
+    userSchool.value = "";
+    userAge.value = "";
+  };
+
+  const loadProfile = async (uid) => {
+    setLoadingState();
+    try {
+
+      const userDoc = await getDoc(doc(db, "users", uid));
+      if (userDoc.exists()) {
+
+        const data = userDoc.data();
+        userName.textContent = data.fullName || 'Not set';
+        userEmail.value = data.email || 'Not set';
+        userSchool.value = data.school || 'Not set';
+        userAge.value = data.age || 'Not set';
+      } else {
+        userName.textContent = "User not found";
+      }
+    } catch (error) {
+      userName.textContent = "Error loading profile";
+      alert(`Error loading profile: ${error.message}`);
+    } finally {
+      // Show profile content and hide loading screen
+      document.getElementById('profileLoading').style.display = 'none';
+      document.querySelector('.profile-container').style.display = 'block';
+    }
+  };
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadProfile(user.uid);
+    } else {
+      window.location.href = 'login.html';
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    } catch (error) {
+      alert(`Logout failed: ${error.message}`);
+    }
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click', async () => {
+    if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          await deleteDoc(doc(db, "users", user.uid));
+          await user.delete();
+          window.location.href = 'login.html';
+        }
+      } catch (error) {
+        alert(`Error deleting account: ${error.message}`);
+      }
+    }
+  });
+
+  let selectedPfpUrl = "";
+
+document.querySelectorAll(".pfp-option").forEach(img => {
+  img.addEventListener("click", () => {
+    selectedPfpUrl = img.src;
+    document.getElementById("userPhoto").src = selectedPfpUrl;
+  });
+});
+
+document.getElementById("savePfpBtn").addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (user && selectedPfpUrl) {
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        profilePicture: selectedPfpUrl
+      });
+      alert("Profile picture updated!");
+    } catch (error) {
+      alert("Failed to update: " + error.message);
+    }
+  } else {
+    alert("Please select a profile picture first.");
+  }
+});// Toggle profile picture options
+document.getElementById("togglePfpOptions").addEventListener("click", () => {
+  const options = document.getElementById("profileOptions");
+  const saveBtn = document.getElementById("savePfpBtn");
+
+  const isVisible = options.style.display === "block";
+  options.style.display = isVisible ? "none" : "block";
+  saveBtn.style.display = isVisible ? "none" : "block";
+});
+
+
+</script>
+
+<div id="chatbot-fab" style="position:fixed;bottom:49px;right:32px;z-index:9999;cursor:pointer;display:flex;align-items:center;justify-content:center;width:98px;height:75px;background:rgba(255,255,255,0.95);border-radius:50%;">
+  <span class="material-icons" style="color:#27c2ed;font-size:45px;">smart_toy</span>
+</div>
+<div id="chatbot-window" style="display:none;position:fixed;bottom:104px;right:32px;width:340px;max-width:95vw;background:#fff;border-radius:18px;box-shadow:0 8px 32px rgba(30,60,114,0.18);overflow:hidden;z-index:10000;flex-direction:column;">
+  <div style="background:#2f3dff;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-weight:600;font-size:1.1rem;">T2S Chatbot</span>
+    <span id="chatbot-close" class="material-icons" style="cursor:pointer;">close</span>
+  </div>
+  <div id="messages" style="padding:16px;height:260px;overflow-y:auto;background:#f7fafd;font-size:0.98rem;"></div>
+  <div style="display:flex;align-items:center;padding:12px 16px;border-top:1px solid #eee;background:#fafbfc;">
+    <input id="userInput" type="text" placeholder="Type a message..." style="flex:1;padding:8px 12px;border-radius:16px;border:1px solid #ddd;outline:none;font-size:1rem;">
+    <button id="chatbot-send" style="margin-left:8px;background:#2196F3;border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+      <span class="material-icons" style="color:#fff;">send</span>
+    </button>
+  </div>
+</div>
+
+
+<script>
+const fab = document.getElementById('chatbot-fab');
+const chatWindow = document.getElementById('chatbot-window');
+const closeBtn = document.getElementById('chatbot-close');
+const sendBtn = document.getElementById('chatbot-send');
+const input = document.getElementById('userInput');
+const messages = document.getElementById('messages');
+
+// Show chat window when FAB is clicked
+fab.onclick = () => {
+  chatWindow.style.display = 'flex';
+  fab.style.display = 'none';
+  input.focus();
+};
+
+// Hide chat window when close is clicked
+closeBtn.onclick = () => {
+  chatWindow.style.display = 'none';
+  fab.style.display = 'flex';
+};
+
+// Send message on button click or Enter key
+sendBtn.onclick = sendMessage;
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage('user', text);
+  input.value = '';
+  input.disabled = true;
+  sendBtn.disabled = true;
+  await sendMessageToDialogflow(text);
+  input.disabled = false;
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+async function sendMessageToDialogflow(message, sessionId = 'user-123') {
+  addMessage('bot', '...');
+  try {
+    const response = await fetch('https://frontendapichatbot.vercel.app/api/dialogflow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, sessionId })
+    });
+    const data = await response.json();
+    // Remove the loading "..." message
+    messages.removeChild(messages.lastChild);
+    addMessage('bot', data.reply || 'Sorry, no reply.');
+  } catch (err) {
+    messages.removeChild(messages.lastChild);
+    addMessage('bot', 'Error connecting to server.');
+  }
+}
+
+function addMessage(sender, text) {
+  const msg = document.createElement('div');
+  msg.className = sender;
+  msg.textContent = text;
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+</script>
+<script>
+  const userPhoto = document.getElementById('userPhoto');
+  const profileOptions = document.getElementById('profileOptions');
+  const togglePfpOptions = document.getElementById('togglePfpOptions');
+  const pfpOptions = document.querySelectorAll('.pfp-option');
+  const savePfpBtn = document.getElementById('savePfpBtn');
+
+  let selectedPfp = null;
+
+  // Load saved profile picture from localStorage
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedPfp = localStorage.getItem('selectedPfp');
+    if (savedPfp) {
+      userPhoto.src = savedPfp;
+    }
+  });
+
+
+
+  // Handle profile picture selection
+  pfpOptions.forEach(pfp => {
+    pfp.addEventListener('click', () => {
+      selectedPfp = pfp.src;
+      userPhoto.src = selectedPfp;
+      savePfpBtn.style.display = 'block';
+    });
+  });
+
+  // Save selected profile picture permanently
+  savePfpBtn.addEventListener('click', () => {
+    if (selectedPfp) {
+      localStorage.setItem('selectedPfp', selectedPfp);
+      savePfpBtn.style.display = 'none';
+      profileOptions.style.display = 'none';
+      alert("Profile picture updated!");
+    }
+  });
+</script>
+
+ </div>
+</body>
+</html>

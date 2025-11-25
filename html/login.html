@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="login.css">
+  <title>Login</title>
+  
+</head>
+<body>
+  <div class="auth-card">
+
+    <div class="logo">
+      <img src="logo1.png" alt="App Logo">
+    </div>
+   
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p>No account? <a href="register.html">Create Account</a></p>
+  </div>
+  
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { 
+    getAuth, 
+    signInWithEmailAndPassword,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+  // Firebase Configuration - VERIFY THESE VALUES IN FIREBASE CONSOLE
+  const firebaseConfig = {
+    apiKey: "AIzaSyDBZ7tcCJJdGCo7C8FXRiUPQ8OfOzexllc",
+    authDomain: "time2study-4f2f3.firebaseapp.com",
+    projectId: "time2study-4f2f3",
+    storageBucket: "time2study-4f2f3.appspot.com",
+    messagingSenderId: "856561565211",
+    appId: "1:856561565211:web:e59307f6c4dcb7a52582be",
+    measurementId: "G-9S9C5D6TXF"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Debugging setup
+  console.log("Firebase initialized:", app.name);
+  console.log("Auth service:", auth.app.name);
+
+  // Auth State Listener with debug logs
+  onAuthStateChanged(auth, (user) => {
+    console.log('Auth state changed:', user ? 'Logged in' : 'Logged out');
+    const currentPage = window.location.pathname.split('/').pop();
+    
+    if (user && ['login.html', 'register.html'].includes(currentPage)) {
+      console.log('Redirecting authenticated user to home');
+      window.location.href = 'home.html';
+    }
+  });
+
+  // Login Form Handler with enhanced error handling
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('Login form submitted');
+    
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    // Basic validation
+    if (!email || !password) {
+      alert('Please fill in both email and password');
+      return;
+    }
+
+  try {
+  console.log('Attempting login with:', email);
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  console.log('Login success:', userCredential.user.uid);
+
+  // Set flag so loader only shows once
+  sessionStorage.setItem('loggedIn', 'true');
+
+  window.location.href = 'home.html';
+
+} catch (error) {
+  console.error('Login error:', error);
+  let message = 'Login failed: ';
+  
+  switch(error.code) {
+    case 'auth/invalid-email':
+      message += 'Invalid email address';
+      break;
+    case 'auth/user-disabled':
+      message += 'Account disabled';
+      break;
+    case 'auth/user-not-found':
+      message += 'No account found';
+      break;
+    case 'auth/wrong-password':
+      message += 'Incorrect password';
+      break;
+    case 'auth/too-many-requests':
+      message += 'Too many attempts. Try again later';
+      break;
+    default:
+      message += error.message;
+  }
+
+  alert(message);
+  document.getElementById('password').value = ''; // Clear password field
+}
+
+  });
+</script>
+
+
+
+
+
+
+</body>
+</html>

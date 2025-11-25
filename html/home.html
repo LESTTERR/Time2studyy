@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- HEAD SECTION: Meta tags, stylesheets, fonts, icons -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<head>
+  <!-- PWA Manifest for installable app support -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Character encoding and viewport for responsive design -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Page title shown in browser tab -->
+  <title>Study Planner – Home</title>
+  
+  <!-- External stylesheets (consider consolidating these 4 files) -->
+  <link rel="stylesheet" href="gome.css">      <!-- ⚠️ TRASH: Possible typo? Should be 'home.css'? -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="task.css">
+  <link rel="stylesheet" href="classcard.css">
+  
+  <!-- Google Fonts preconnect for better loading performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Custom font: M PLUS Rounded 1c -->
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c&display=swap" rel="stylesheet">
+  
+  <!-- Material Design Icons for UI elements -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Favicon displayed in browser tab -->
+  <link rel="icon" type="image/png" href="logo.png">
+  
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- INLINE STYLES: Calendar layout, animations, responsive design -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <style>
+    /* Main wrapper: Flex layout for calendar + schedule side-by-side (desktop) */
+    .responsive-wrapper {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+    }
+
+    /* Calendar and task sections: Width and sizing rules */
+    .calendar-card,
+    .schedule-task-wrapper {
+      min-width: 365px;
+      min-width: 100%;  /* ⚠️ TRASH: Overwrites line above, remove first min-width */
+      width: 100%;
+      flex-shrink: 1;
+    }
+
+    /* Task wrapper: Column layout for stacking schedule + tasks vertically */
+    .schedule-task-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    /* Tablet/Desktop (768px+): Add margin-top spacing (purpose unclear - consider removing) */
+    @media (min-width: 768px) {  
+      .schedule-task-wrapper {
+        margin-top: 31px;  /* ⚠️ TRASH: Magic number, no clear design reason */
+      }
+    }
+
+    /* Tablet/Desktop (768px+): Wider layout with larger min-width */
+    @media (min-width: 768px) {  
+      .calendar-card,
+      .schedule-task-wrapper {
+        gap: 10px;  /* ⚠️ TRASH: Should be on .responsive-wrapper parent, not children */
+        min-width: 600px;
+      }
+    }
+    
+    /* Mobile (below 768px): Stack layout vertically instead of side-by-side */
+    @media (max-width: 768px) {
+      .responsive-wrapper {
+        flex-direction: column;
+      }
+    }
+    
+    /* Highlight style for selected calendar date */
+    .selected-date {
+      background-color: #2196F3;
+      color: white;
+      border-radius: 50%;
+      padding: 5px;
+    }
+
+    /* Hide calendar dates beyond first week when collapsed */
+    #calendarGrid.collapsed .dates-grid span:nth-child(n+8) {
+      display: none;
+    }
+
+    /* Expand/collapse icon rotation animation */
+    .expand-icon {
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .expand-icon.collapsed {
+      transform: rotate(-180deg);
+    }
+
+    /* Loading bar animation: Simulates page loading progress */
+    .loading-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #2196F3;
+      animation: loadbar 2s infinite;
+    }
+
+    /* Loading bar keyframes: Smooth animation from 0% → 80% → 0% */
+    @keyframes loadbar {
+      0% {
+        width: 0%;
+      }
+      50% {
+        width: 80%;
+      }
+      100% {
+        width: 0%;
+      }
+    }
+    
+    /* Calendar header: Month navigation controls */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Navigation buttons: Previous/Next month controls */
+    .nav-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #3d8fcd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    /* Hover state for nav buttons: Light background on hover */
+    .nav-button:hover {
+      background: #f0f0f0;
+    }
+
+    /* Icon size inside nav buttons */
+    .nav-button .material-icons {
+      font-size: 24px;
+    }
+  </style>
+</head>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- BODY: Main application content -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<body>
+
+  <!-- LOADING SCREEN: Shown on app startup (before authentication) -->
+  <div id="loadingScreen"
+    style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:white;">
+    <!-- App logo displayed during loading -->
+    <img src="logo.png" alt="Logo" style="width:120px; margin-bottom:20px;">
+    
+    <!-- Animated loading bar with progress animation -->
+    <div style="width:80%; height:4px; background:#ccc;">
+      <div class="loading-bar"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION CONTAINER: Hidden until Firebase auth completes -->
+  <div class="app-container" style="display: none;">
+    
+    <!-- HOME SECTION: Calendar + Schedule + Tasks layout -->
+    <div class="content-section active" id="homeSection">
+      <!-- Main page with responsive wrapper for desktop/mobile layout -->
+      <div class="main-page" style="padding: 1rem;">
+        <div class="responsive-wrapper">
+          
+          <!-- ═══════════════════════════════════════════ -->
+          <!-- CALENDAR SECTION: Left side on desktop -->
+          <!-- ═══════════════════════════════════════════ -->
+          <div class="calendar-card">
+            <!-- Calendar header with month navigation -->
+            <div class="calendar-header">
+              <!-- Previous month button -->
+              <button class="nav-button" id="prevMonth">
+                <span class="material-icons">chevron_left</span>
+              </button>
+              
+              <!-- Current month/year display -->
+              <h2 id="monthYear"></h2>
+              
+              <!-- Next month button -->
+              <button class="nav-button" id="nextMonth">
+                <span class="material-icons">chevron_right</span>
+              </button>
+            </div>
+
+            <!-- Calendar grid: Days of week + date numbers -->
+            <div class="calendar-grid" id="calendarGrid">
+              <!-- Weekday headers (Sun-Sat) -->
+              <div class="weekdays">
+                <span>Sun</span><span>Mon</span><span>Tue</span>
+                <span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+              </div>
+              
+              <!-- Date cells: Populated dynamically by JavaScript -->
+              <div class="dates-grid" id="datesGrid"></div>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════ -->
+          <!-- SCHEDULE + TASKS SECTION: Right side on desktop -->
+          <!-- ═══════════════════════════════════════════ -->
+          <div class="schedule-task-wrapper">
+            
+            <!-- SCHEDULE CARD: Shows today's classes on selected date -->
+            <div class="schedule-card">
+              <div class="card-header">
+                <h3><span class="material-icons">schedule</span>Schedule</h3>
+              </div>
+              <!-- Schedule items populated by JavaScript -->
+              <div class="schedule-list" id="scheduleList"></div>
+            </div>
+
+            <!-- PENDING TASKS CARD: Shows upcoming tasks/assignments -->
+            <div class="task-card">
+              <div class="card-header">
+                <h3><span class="material-icons">assignment</span>Pending Tasks</h3>
+              </div>
+              <!-- Task items populated by JavaScript -->
+              <div class="task-list" id="pendingTasks"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+   <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- CHATBOT FLOATING ACTION BUTTON: AI assistant for app help -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+ <div id="chatbot-fab" style="display: none;">
+  <span class="material-icons">smart_toy</span>
+</div>
+
+  <!-- Chatbot window: Hidden by default, shown when FAB clicked -->
+  <div id="chatbot-window" style="display:none;">
+    <!-- Chatbot header with title and close button -->
+    <div id="chatbot-header">
+      <span style="font-weight:600;font-size:1.1rem;">T2S Chatbot</span>
+      <span id="chatbot-close" class="material-icons">close</span>
+    </div>
+
+    <!-- Chatbot message display area -->
+    <div id="messages"></div>
+
+    <!-- Chatbot input section: Text input + send button -->
+    <div id="chatbot-input-section">
+      <input id="userInput" type="text" placeholder="Type a message...">
+      <button id="chatbot-send">
+        <span class="material-icons">send</span>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- TAB NAVIGATION BAR: Bottom navigation (mobile-style) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <nav class="tab-bar" style="display: none;">
+    <!-- Home tab: Shows calendar (functional) -->
+    <button class="tab-item active" data-target="homeSection">
+      <span class="material-icons">calendar_today</span>
+      <span class="tab-label">Home</span>
+    </button>
+    
+    <!-- Tasks tab: NO HANDLER IMPLEMENTED - TRASH CODE -->
+    <button class="tab-item" data-target="tasksSection">
+      <span class="material-icons">assignment</span>
+      <span class="tab-label">Tasks</span>
+    </button>
+    
+    <!-- Classes tab: NO HANDLER IMPLEMENTED - TRASH CODE -->
+    <button class="tab-item" data-target="classesSection">
+      <span class="material-icons">school</span>
+      <span class="tab-label">Classes</span>
+    </button>
+    
+    <!-- Profile tab: NO HANDLER IMPLEMENTED - TRASH CODE -->
+    <button class="tab-item" data-target="profileSection">
+      <span class="material-icons">person</span>
+      <span class="tab-label">Profile</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- EXTERNAL SCRIPTS: Firebase, utilities, main app logic -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  
+  <!-- Main app script file -->
+  <script src="script.js"></script>
+
+  <!-- Firebase initialization module -->
+  <script type="module" src="firebase-init.js"></script>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- MAIN APPLICATION LOGIC: Module imports + Firebase auth + Calendar -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <script type="module">
+    // Firebase imports: Database and Authentication
+    import { db, auth } from "./firebase-init.js";
+    import { collection, query, orderBy, where, onSnapshot, getDocs  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    
+    // Chart.js imports: Bar chart visualization for statistics
+    import { Chart, LinearScale, CategoryScale, BarController, BarElement } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/+esm';
+    // Register Chart.js components for use
+    Chart.register(LinearScale, CategoryScale, BarController, BarElement);
+
+    // Calendar state: Track current month/year being displayed
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+
+  /* ═══════════════════════════════════════════════════════════════ */
+/* FIREBASE AUTH CHECK: Only show app if user is logged in */
+/* ═══════════════════════════════════════════════════════════════ */
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // User authenticated: Initialize app components
+    await initializeCalendar(user);
+    await loadPendingTasks(user);
+    await checkUpcomingAlerts(user);
+    await loadStatistics(user);
+    
+    // Hide loading screen, show main app UI, tab bar, and chatbot FAB
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.querySelector('.app-container').style.display = 'block';
+    document.querySelector('.tab-bar').style.display = 'flex';
+    document.getElementById('chatbot-fab').style.display = 'flex';
+       
+  } else {
+    // No authenticated user: Redirect to login page
+    window.location.href = 'login.html';
+  }
+});
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* CALENDAR INITIALIZATION: Set up month navigation listeners */
+    /* ═══════════════════════════════════════════════════════════════ */
+    async function initializeCalendar(user) {
+      const calendarGrid = document.getElementById('calendarGrid');
+      calendarGrid.classList.remove('collapsed');
+      
+      // Previous month button: Navigate backwards
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        renderCalendar(currentMonth, currentYear, user);
+      });
+
+      // Next month button: Navigate forwards
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        renderCalendar(currentMonth, currentYear, user);
+      });
+
+      // Initial render: Display current month/year
+      await renderCalendar(currentMonth, currentYear, user);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* RENDER CALENDAR: Draw calendar grid with dates and task dots */
+    /* ═══════════════════════════════════════════════════════════════ */
+    async function renderCalendar(month, year, user) {
+      const monthYear = document.getElementById('monthYear');
+      const datesGrid = document.getElementById('datesGrid');
+      
+      // Display month/year header (e.g., "November 2025")
+      const date = new Date(year, month);
+      monthYear.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+      
+      // Clear previous calendar grid
+      datesGrid.innerHTML = '';
+      
+      // Add blank cells for days before month starts (e.g., if month starts on Wednesday)
+      const firstDow = new Date(year, month, 1).getDay();
+      for (let i = 0; i < firstDow; i++) {
+        const b = document.createElement('span');
+        b.className = 'blank';
+        datesGrid.appendChild(b);
+      }
+
+      // Get total days in month (e.g., 28-31)
+      const dayCount = new Date(year, month + 1, 0).getDate();
+      
+      // Fetch user's tasks from Firebase to mark due dates with colored dots
+      const taskDotColors = new Map();
+      if (user && user.uid) {
+        const taskQuery = query(collection(db, 'tasks'), where("userId", "==", user.uid));
+        const taskSnapshot = await getDocs(taskQuery);
+        
+        taskSnapshot.forEach(doc => {
+          const t = doc.data();
+          // Convert Firebase timestamp to JavaScript Date
+          const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
+          
+          // Check if task is in current month being displayed
+          if (due.getMonth() === month && due.getFullYear() === year) {
+            const day = due.getDate();
+            // Color code by task type: green=assignment, red=project, black=other
+            const taskType = (t.type || "").toLowerCase();
+            const color = 
+              taskType === "assignment" ? "green" :
+              taskType === "project" ? "red" : "black";
+            taskDotColors.set(day, color);
+          }
+        });
+      } else {
+        console.warn("renderCalendar: User or user.uid is invalid for task query.");
+      }
+
+      // Create clickable date cells for each day in month
+      for (let d = 1; d <= dayCount; d++) {
+        const s = document.createElement('span');
+        s.textContent = d;
+        
+        // Add colored dot if this date has a task due
+        if (taskDotColors.has(d)) {
+          const dot = document.createElement('div');
+          const color = taskDotColors.get(d);
+          dot.style.cssText = `
+            width: 6px; height: 6px; background-color: ${color}; border-radius: 50%;
+            position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+          `;
+          s.style.position = 'relative';
+          s.appendChild(dot);
+        }
+
+        // Highlight today's date with blue background
+        const today = new Date();
+        if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+          s.classList.add('selected-date');
+          // Load today's schedule immediately
+          showFor(d, month, year, user);
+        }
+        datesGrid.appendChild(s);
+      }
+      
+      // Setup click handlers for each date to show schedule
+      setupDateClickEvents(month, year, user);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* LOAD PENDING TASKS: Fetch and display upcoming tasks from Firebase */
+    /* ═══════════════════════════════════════════════════════════════ */
+    async function loadPendingTasks(user) {
+      // Guard: Verify user exists before querying
+      if (!user || !user.uid) {
+        console.error("loadPendingTasks: User or user.uid is invalid.");
+        document.getElementById('pendingTasks').innerHTML = "<p style='text-align:center;color:red;'>Error: User not identified.</p>";
+        return;
+      }
+      
+      const pending = document.getElementById('pendingTasks');
+      
+      // Query: Get all tasks for this user, sorted by due date
+      const q = query(
+        collection(db, 'tasks'),
+        where("userId", "==", user.uid),
+        orderBy('dueDate')
+      );
+      
+      // Real-time listener: Update task list whenever database changes
+      return new Promise((resolve) => {
+        let first = true;
+        onSnapshot(q, (snapshot) => {
+          if (snapshot.empty) {
+            // No tasks found
+            pending.innerHTML = "<p style='text-align:center;color:gray;'>No pending tasks.</p>";
+          } else {
+            pending.innerHTML = '';
+            const now = new Date();
+
+            // Process each task document
+            snapshot.forEach(doc => {
+              const t = doc.data();
+              try {
+                // Convert Firebase timestamp to JavaScript Date
+                const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
+
+                // Only show tasks with future due dates (not past-due)
+                if (due >= now) {
+                  const ti = document.createElement('div');
+                  const typeClass = t.type ? t.type.toLowerCase() : '';
+                  ti.className = `task-item ${typeClass}`;
+
+                  // Create task card HTML
+                  ti.innerHTML = `
+                    <div class="task-info">
+                      <h4>${t.name}</h4>
+                      <p>${t.description}</p>
+                      <span class="deadline">Deadline: ${due.toLocaleDateString()}</span>
+                    </div>
+                  `;
+                  pending.appendChild(ti);
+                }
+              } catch (error) {
+                console.error('Error processing task:', error);
+              }
+            });
+          }
+          
+          // Resolve promise on first load (for await in caller)
+          if (first) {
+            first = false;
+            resolve();
+          }
+        }, (error) => {
+          // Firebase query error handler
+          console.error("Error getting tasks:", error);
+          pending.innerHTML = "<p style='text-align:center;color:red;'>Error loading tasks</p>";
+          if (first) {
+            first = false;
+            resolve();
+          }
+        });
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* SETUP DATE CLICK EVENTS: Add click handlers to calendar dates */
+    /* ═══════════════════════════════════════════════════════════════ */
+    function setupDateClickEvents(month, year, user) {
+      const datesGrid = document.getElementById('datesGrid');
+      
+      // Add click listener to each date cell
+      datesGrid.querySelectorAll('span').forEach(s => {
+        // Skip blank cells (days before month starts)
+        if (!s.classList.contains('blank')) {
+          s.addEventListener('click', () => {
+            highlight(s);  // Highlight selected date with blue background
+            // Load schedule for clicked date
+            showFor(parseInt(s.textContent), month, year, user);
+          });
+        }
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* HIGHLIGHT TODAY: Highlight and load schedule for system's today */
+    /* ═══════════════════════════════════════════════════════════════ */
+    function highlightToday() {
+      const now = new Date();
+      const datesGrid = document.getElementById('datesGrid');
+      const todayNum = now.getDate();
+
+      // Find and highlight today in the calendar grid (if visible)
+      if (now.getMonth() === currentMonth && now.getFullYear() === currentYear) {
+        const todaySpan = Array.from(datesGrid.children).find(ch => 
+            !ch.classList.contains('blank') && parseInt(ch.textContent) === todayNum
+        );
+        if (todaySpan) {
+            highlight(todaySpan);
+        }
+      }
+      
+      // Load schedule for system's current date
+      if (auth.currentUser) {
+        showFor(todayNum, now.getMonth(), now.getFullYear(), auth.currentUser);
+      } else {
+        console.warn("highlightToday: auth.currentUser is not available.");
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* TIME FORMAT HELPER: Convert 24-hour format to 12-hour AM/PM */
+    /* ═══════════════════════════════════════════════════════════════ */
+    function to12HourFormat(hours, minutes) {
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* SHOW SCHEDULE FOR DATE: Load classes for selected calendar date */
+    /* ═══════════════════════════════════════════════════════════════ */
+    async function showFor(dayNum, month, year, user) {
+      const scheduleList = document.getElementById('scheduleList');
+      clearSchedule();
+
+      // Guard: Verify user exists
+      if (!user || !user.uid) {
+        console.error("showFor called with invalid user object or uid:", user);
+        scheduleList.innerHTML = "<p style='text-align:center;color:red;'>Error: User not identified for schedule.</p>";
+        return;
+      }
+
+      // Create date from passed parameters
+      const sel = new Date(year, month, dayNum);
+      // Get weekday name (e.g., "Mon", "Tue") to match class schedule
+      const wd = sel.toLocaleString('en-US', { weekday: 'short' });
+
+      // Query: Get all classes for this user, sorted by start time
+      const q = query(
+        collection(db, 'classes'),
+        where("userId", "==", user.uid),
+        orderBy('time')
+      );
+
+      // Real-time listener: Update schedule whenever classes change
+      onSnapshot(q,
+        (snapshot) => {
+          let found = false;
+          scheduleList.innerHTML = '';
+
+          // Process each class document
+          snapshot.forEach(doc => {
+            const c = doc.data();
+            // Split class days (e.g., "Mon, Wed, Fri") and match with selected day
+            const classDays = c.days.split(/,\s*/).map(d => d.substring(0, 3));
+            
+            if (classDays.includes(wd)) {
+              found = true;
+              
+              // Parse class time range (e.g., "9:00 - 10:30")
+              const [startTime, endTime] = c.time.split(' - ');
+              const [startHours, startMinutes] = startTime.split(':');
+              const [endHours, endMinutes] = endTime.split(':');
+
+              // Format time in 12-hour AM/PM format
+              const timeRange = `${to12HourFormat(parseInt(startHours), parseInt(startMinutes))} – ${to12HourFormat(parseInt(endHours), parseInt(endMinutes))}`;
+
+              // Create schedule item card
+              const it = document.createElement('div');
+              it.className = 'schedule-item';
+              it.innerHTML = `
+                <div class="time">${timeRange}</div>
+                <div class="details">
+                  <h4>${c.name || 'Unnamed Class'}</h4>
+                  <p>${c.instructor || ''}</p>
+                </div>
+              `;
+              scheduleList.appendChild(it);
+            }
+          });
+
+          // Display message if no classes on this day
+          if (!found) {
+            scheduleList.innerHTML = "<p style='text-align:center;color:gray;'>No classes on this day.</p>";
+          }
+        },
+        (error) => {
+          // Firebase query error handler
+          console.error("Error getting classes for showFor:", error);
+          scheduleList.innerHTML = "<p style='text-align:center;color:red;'>Error loading schedule</p>";
+        }
+      );
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* CLEAR SCHEDULE: Empty the schedule list */
+    /* ═══════════════════════════════════════════════════════════════ */
+    function clearSchedule() {
+      const scheduleList = document.getElementById('scheduleList');
+      scheduleList.innerHTML = '';
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* HIGHLIGHT: Add/remove selected-date class from calendar cells */
+    /* ═══════════════════════════════════════════════════════════════ */
+    function highlight(el) {
+      // Remove highlight from previously selected date
+      const selectedEl = document.querySelector('.selected-date');
+      if (selectedEl) selectedEl.classList.remove('selected-date');
+      // Add highlight to newly selected date
+      el.classList.add('selected-date');
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* FAB MAIN BUTTON: Toggle floating action button menu */
+    /* ═══════════════════════════════════════════════════════════════ */
+    const fabMain = document.getElementById('fabMain');
+    const fabOpts = document.querySelector('.fab-options');
+    if (fabMain) {
+      fabMain.addEventListener('click', () => {
+        fabMain.classList.toggle('open');
+        fabOpts.classList.toggle('show');
+        fabMain.textContent = fabMain.classList.contains('open') ? 'close' : 'add';
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* CHECK UPCOMING ALERTS: Notify user of classes/tasks within 2 hours */
+    /* ═══════════════════════════════════════════════════════════════ */
+    async function checkUpcomingAlerts(user) {
+      // Guard: Verify user exists
+      if (!user || !user.uid) {
+        console.error("checkUpcomingAlerts: User or user.uid is invalid.");
+        return;
+      }
+      
+      const now = new Date();
+      const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      const nextDay = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      // Query: Get all classes and tasks for this user
+      const classQuery = query(collection(db, "classes"), where("userId", "==", user.uid));
+      const taskQuery = query(collection(db, "tasks"), where("userId", "==", user.uid));
+
+      let showAlert = false;
+      let alertMessages = [];
+
+      // Check for upcoming classes within 2 hours
+      try {
+        const classSnapshot = await getDocs(classQuery);
+        classSnapshot.forEach(doc => {
+          const c = doc.data();
+          // Split class days and check if class is today
+          const classDays = c.days.split(/,\s*/);
+          const today = now.toLocaleString('en-US', { weekday: 'long' });
+
+          if (classDays.includes(today)) {
+            // Parse class start time
+            const [startH, startM] = c.time.split(" - ")[0].split(":").map(Number);
+            const classTime = new Date(now);
+            classTime.setHours(startH, startM, 0, 0);
+
+            // Alert if class starts within 2 hours
+            if (classTime > now && classTime <= twoHoursLater) {
+              alertMessages.push(`Upcoming class "${c.name}" starts at ${c.time.split(" - ")[0]}`);
+              showAlert = true;
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error checking upcoming classes:", error);
+      }
+
+      // Check for tasks due within 24 hours
+      try {
+        const taskSnapshot = await getDocs(taskQuery);
+        taskSnapshot.forEach(doc => {
+          const t = doc.data();
+          const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
+          
+          // Alert if task is due within 24 hours
+          if (due > now && due <= nextDay) {
+            alertMessages.push(`Task "${t.name}" is due soon (${due.toLocaleDateString()})`);
+            showAlert = true;
+          }
+        });
+      } catch (error) {
+        console.error("Error checking upcoming tasks:", error);
+      }
+
+      // Show all collected alerts to user
+      if (showAlert) {
+        alertMessages.forEach(msg => showNotification(msg));
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ */
+/* LOAD STATISTICS: Fetch data and render bar chart of study stats */
+/* ═══════════════════════════════════════════════════════════════ */
+async function loadStatistics(user) {
+  // Guard: Verify user exists
+  if (!user || !user.uid) {
+    console.error("loadStatistics: User or user.uid is invalid.");
+    return;
+  }
+  
+  // Check if canvas element exists
+  const canvas = document.getElementById('myBarChart');
+  if (!canvas) {
+    console.warn("Statistics chart canvas not found in HTML");
+    return;
+  }
+
+  // Query: Get all classes and tasks for this user
+  const classesRef = query(collection(db, 'classes'), where("userId", "==", user.uid));
+  const tasksRef = query(collection(db, 'tasks'), where("userId", "==", user.uid));
+
+  // Store unsubscribe functions for cleanup
+  const unsubs = [];
+
+  // Listen for class data changes
+  const classesUnsub = onSnapshot(classesRef, (classSnap) => {
+    // Listen for task data changes (nested listener)
+    const tasksUnsub = onSnapshot(tasksRef, (taskSnap) => {
+      // Count total classes and tasks
+      const totalClasses = classSnap.size;
+      const totalTasks = taskSnap.size;
+      let completedTasks = 0;
+      let pendingTasks = 0;
+
+      // Count completed vs pending tasks
+      taskSnap.forEach(doc => {
+        const task = doc.data();
+        task.completed ? completedTasks++ : pendingTasks++;
+      });
+
+      // Get canvas context for chart
+      const ctx = canvas.getContext('2d');
+      
+      // Destroy previous chart instance if exists (prevent memory leaks)
+      if (window.myChart && typeof window.myChart.destroy === 'function') {
+        window.myChart.destroy();
+      }
+
+      // Create new bar chart with study statistics
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Classes', 'Total Tasks', 'Completed', 'Pending'],
+          datasets: [{
+            label: 'Study Statistics',
+            data: [totalClasses, totalTasks, completedTasks, pendingTasks],
+            backgroundColor: [
+              'rgba(78, 115, 223, 0.8)',    // Blue for classes
+              'rgba(54, 185, 204, 0.8)',    // Teal for total tasks
+              'rgba(28, 200, 138, 0.8)',    // Green for completed
+              'rgba(246, 194, 62, 0.8)'     // Yellow for pending
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Study Statistics', padding: 20 }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, precision: 0 },
+              grid: { display: true }
+            },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }, (error) => {
+      console.error("Error fetching tasks for statistics:", error);
+    });
+    unsubs.push(tasksUnsub);
+  }, (error) => {
+    console.error("Error fetching classes for statistics:", error);
+  });
+  unsubs.push(classesUnsub);
+
+  // Return cleanup function to caller
+  return () => {
+    unsubs.forEach(unsub => unsub());
+    if (window.myChart) {
+      window.myChart.destroy();
+    }
+  };
+}
+    /* ═══════════════════════════════════════════════════════════════ */
+    /* SHOW NOTIFICATION: Display temporary toast notification to user */
+    /* ═══════════════════════════════════════════════════════════════ */
+    function showNotification(message) {
+      // Get or create notification container
+      const container = document.getElementById('alertBoxContainer');
+      if (!container) {
+        console.error("Alert box container not found!");
+        return;
+      }
+      
+      // Create notification box element
+      const box = document.createElement('div');
+      box.textContent = message;
+
+      // Style notification with fade-in/fade-out animation
+      box.style.cssText = `
+        background-color: white; color: black; font-weight: bold;
+        padding: 12px 16px; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        font-size: 0.95rem; max-width: 300px;
+        animation: fadein 0.3s ease, fadeout 0.5s ease 4.5s;
+        opacity: 0; margin-bottom: 10px;
+      `;
+
+      // Fade in notification
+      setTimeout(() => box.style.opacity = 1, 10);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        box.style.opacity = 0;
+        setTimeout(() => {
+            if (container.contains(box)) {
+                container.removeChild(box);
+            }
+        }, 500);
+      }, 5000);
+
+      // Add to notification container
+      container.appendChild(box);
+    }
+
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- LOADING SCREEN TIMER: Handle first-time load vs login redirect -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+ <script>
+  const loadingScreen = document.getElementById('loadingScreen');
+  const tabBar = document.querySelector('.tab-bar');
+  const chatbotFab = document.getElementById('chatbot-fab');
+  const appContainer = document.querySelector('.app-container');
+
+  /* Logic for managing loading screen behavior:
+     - First visit: Show 2s loading animation
+     - After login redirect: Show 2s loading animation  
+     - Already shown: Skip animation, show app immediately */
+  const flag = sessionStorage.getItem('loggedIn');
+
+  // IMPORTANT: Keep tab bar and chatbot FAB hidden initially
+  if (tabBar) tabBar.style.display = 'none';
+  if (chatbotFab) chatbotFab.style.display = 'none';
+  if (appContainer) appContainer.style.display = 'none';
+
+  if (flag === 'true') {
+    // After login redirect: Show loading for 2 seconds
+    setTimeout(() => {
+      if (loadingScreen) loadingScreen.style.display = 'none';
+      // DON'T show tab bar and chatbot here - let Firebase auth handle it
+      sessionStorage.setItem('loggedIn', 'done');
+    }, 2000);
+  } else if (!flag) {
+    // First-time visit: Show loading screen once for 2 seconds
+    setTimeout(() => {
+      if (loadingScreen) loadingScreen.style.display = 'none';
+      // DON'T show tab bar and chatbot here - let Firebase auth handle it
+      sessionStorage.setItem('loggedIn', 'done');
+    }, 2000);
+  } else {
+    // Already shown loading earlier: Skip animation
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    // DON'T show tab bar and chatbot here - let Firebase auth handle it
+  }
+</script>
+
+ 
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- CHATBOT SCRIPT: Handle FAB interaction and message sending -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    // DOM elements for chatbot UI
+    const fab = document.getElementById('chatbot-fab');
+    const chatWindow = document.getElementById('chatbot-window');
+    const closeBtn = document.getElementById('chatbot-close');
+    const sendBtn = document.getElementById('chatbot-send');
+    const input = document.getElementById('userInput');
+    const messages = document.getElementById('messages');
+
+    /* Show chatbot window: Click FAB to open chat */
+    fab.onclick = () => {
+      chatWindow.style.display = 'flex';
+      fab.style.display = 'none';
+      input.focus();
+    };
+
+    /* Hide chatbot window: Click close button */
+    closeBtn.onclick = () => {
+      chatWindow.style.display = 'none';
+      fab.style.display = 'flex';
+    };
+
+    /* Send message on button click OR Enter key */
+    sendBtn.onclick = sendMessage;
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    /* SEND MESSAGE: Process user input and send to Dialogflow API */
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      
+      // Add user message to chat
+      addMessage('user', text);
+      input.value = '';
+      
+      // Disable input while processing
+      input.disabled = true;
+      sendBtn.disabled = true;
+      
+      // Send to Dialogflow AI backend
+      await sendMessageToDialogflow(text);
+      
+      // Re-enable input
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+
+    /* SEND TO DIALOGFLOW: Call API endpoint with user message */
+    async function sendMessageToDialogflow(message) {
+      // Use Firebase user ID for session tracking, or 'guest' if logged out
+      const sessionId = auth.currentUser ? auth.currentUser.uid : 'guest';
+      
+      // Show loading indicator
+      addMessage('bot', '...');
+      
+      try {
+        // Call Dialogflow API endpoint
+        const response = await fetch('https://frontendapichatbot.vercel.app/api/dialogflow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, sessionId })
+        });
+        const data = await response.json();
+        
+        // Remove loading indicator and show AI response
+        messages.removeChild(messages.lastChild);
+        addMessage('bot', data.reply || 'Sorry, no reply.');
+      } catch (err) {
+        // Error handling: Show error message if API fails
+        messages.removeChild(messages.lastChild);
+        addMessage('bot', 'Error connecting to server.');
+      }
+    }
+
+    /* ADD MESSAGE: Append message to chat (user or bot) */
+    function addMessage(sender, text) {
+      const msg = document.createElement('div');
+
+      // Apply CSS class based on sender (user vs bot)
+      if (sender === 'user') {
+        msg.className = 'user-message';
+      } else {
+        msg.className = 'bot-message';
+      }
+
+      // Set message text content
+      msg.textContent = text;
+      messages.appendChild(msg);
+
+      // Auto-scroll to bottom of messages
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+  </script>
+
+</body>
+
+</html>
