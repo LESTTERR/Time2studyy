@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="../js/manifest.json">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Study Planner – Tasks</title>
-  <link rel="stylesheet" href="gome.css">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="tasks.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/tasks.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -28,31 +27,79 @@
       <button class="fab-main material-icons" id="addTaskFab">add</button>
     </div>
 
-    <nav class="tab-bar">
-  <a href="home.html" class="tab-item">
-    <span class="material-icons">calendar_today</span>
-    <span class="tab-label">Home</span>
-  </a>
-  <a href="tasks.html" class="tab-item active">
-    <span class="material-icons">assignment</span>
-    <span class="tab-label">Tasks</span>
-  </a>
-  <a href="classes.html" class="tab-item">
-    <span class="material-icons">school</span>
-    <span class="tab-label">Classes</span>
-  </a>
-  <a href="profile.html" class="tab-item">
-    <span class="material-icons">person</span>
-    <span class="tab-label">Profile</span>
-  </a>
-</nav>
 
+    <div id="chatbot-fab" style="display: none;">
+  <span class="material-icons">smart_toy</span>
+</div>
+
+  <!-- Chatbot window: Hidden by default, shown when FAB clicked -->
+  <div id="chatbot-window" style="display:none;">
+    <!-- Chatbot header with title and close button -->
+    <div id="chatbot-header">
+      <span style="font-weight:600;font-size:1.1rem;">T2S Chatbot</span>
+      <span id="chatbot-close" class="material-icons">close</span>
+    </div>
+
+    <!-- Chatbot message display area -->
+    <div id="messages"></div>
+
+    <!-- Chatbot input section: Text input + send button -->
+    <div id="chatbot-input-section">
+      <input id="userInput" type="text" placeholder="Type a message...">
+      <button id="chatbot-send">
+        <span class="material-icons">send</span>
+      </button>
+    </div>
+  </div>
+  
+ <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- TAB NAVIGATION: injected from components/tabbar.html -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="tab-bar-container"></div>
+  <script>
+    (async function loadTabbar() {
+      try {
+        const res = await fetch('./components/tabsbar.html');
+        const html = await res.text();
+        const container = document.getElementById('tab-bar-container');
+        container.innerHTML = html;
+
+        // Execute any scripts included in the fetched fragment
+        container.querySelectorAll('script').forEach(s => {
+          const ns = document.createElement('script');
+          if (s.src) ns.src = s.src; else ns.textContent = s.textContent;
+          document.body.appendChild(ns);
+          s.remove();
+        });
+
+        // Show the bar (fragment default is display:none)
+        const bar = container.querySelector('.tab-bar');
+        if (bar) bar.style.display = 'flex';
+
+        // Mark the current page tab active (by href or data-target)
+        const path = location.pathname.split('/').pop();
+        container.querySelectorAll('.tab-item').forEach(item => {
+          // compare href filename or data-target match
+          const href = item.getAttribute('href') || '';
+          const target = item.dataset.target || '';
+          if (href.endsWith(path) || (target && document.getElementById(target))) {
+            item.classList.add('active');
+          } else {
+            item.classList.remove('active');
+          }
+        });
+
+      } catch (err) {
+        console.error('Failed to load tab bar:', err);
+      }
+    })();
+  </script>
   
 
 
 <!-- ✅ Firebase and Firestore -->
 <script type="module">
-  import { db, auth } from './firebase-init.js';
+  import { db, auth } from '../js/firebase-init.js';
   import {
     collection,
     deleteDoc,
@@ -195,22 +242,6 @@ div.className = `task-item ${task.type || ''}` + (task.completed ? " done" : "")
     });
   });
 </script>
-<div id="chatbot-fab" style="position:fixed;bottom:49px;right:32px;z-index:9999;cursor:pointer;display:flex;align-items:center;justify-content:center;width:98px;height:75px;background:rgba(255,255,255,0.95);border-radius:50%;">
-  <span class="material-icons" style="color:#27c2ed;font-size:45px;">smart_toy</span>
-</div>
-<div id="chatbot-window" style="display:none;position:fixed;bottom:104px;right:32px;width:340px;max-width:95vw;background:#fff;border-radius:18px;box-shadow:0 8px 32px rgba(30,60,114,0.18);overflow:hidden;z-index:10000;flex-direction:column;">
-  <div style="background:#2f3dff;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
-    <span style="font-weight:600;font-size:1.1rem;">T2S Chatbot</span>
-    <span id="chatbot-close" class="material-icons" style="cursor:pointer;">close</span>
-  </div>
-  <div id="messages" style="padding:16px;height:260px;overflow-y:auto;background:#f7fafd;font-size:0.98rem;"></div>
-  <div style="display:flex;align-items:center;padding:12px 16px;border-top:1px solid #eee;background:#fafbfc;">
-    <input id="userInput" type="text" placeholder="Type a message..." style="flex:1;padding:8px 12px;border-radius:16px;border:1px solid #ddd;outline:none;font-size:1rem;">
-    <button id="chatbot-send" style="margin-left:8px;background:#2196F3;border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-      <span class="material-icons" style="color:#fff;">send</span>
-    </button>
-  </div>
-</div>
 
 
 <script>

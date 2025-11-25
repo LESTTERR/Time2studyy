@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="manifest" href="js/manifest.json">
+    <!-- Manifest: if manifest.json is one level up, use ../manifest.json.
+         If manifest.json is in html/js/, use js/manifest.json instead. -->
+    <link rel="manifest" href="../manifest.json">
     <meta name="theme-color" content="#2196F3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,9 +18,9 @@
 }
 
 body {
-    background: url('image/blue.jpg') no-repeat center center;
-background-size: cover;
-
+    /* background image path fixed to reference the image folder in project root */
+    background: url('../image/blue.jpg') no-repeat center center;
+    background-size: cover;
     min-height: 100vh;
     color: #2d3748;
     line-height: 1.6;
@@ -416,7 +418,8 @@ body.dark input, body.dark textarea, body.dark select {
 <body>
     <header>
         <div class="logo-container">
-            <img src="image/logo.png" alt="StudyFlow Logo" class="logo-image">
+            <!-- logo path fixed -->
+            <img src="../image/logo.png" alt="StudyFlow Logo" class="logo-image">
             <span class="logo-text">Time2Study</span>
         </div>
         <nav>
@@ -424,7 +427,7 @@ body.dark input, body.dark textarea, body.dark select {
                 <li><a href="#features">Features</a></li>
                 <li><a href="#screenshots">Screenshots</a></li>
                 
-                <li><a href="html/login.html" class="cta-button">Login</a></li>
+                <li><a href="login.html" class="cta-button">Login</a></li>
             </ul>
         </nav>
 
@@ -436,7 +439,7 @@ body.dark input, body.dark textarea, body.dark select {
         <h1>Organize Your Study Schedule Smarter</h1>
         <p>Time2Study is an scheduling app that helps students optimize their study time, track progress, and achieve academic goals.</p>
         <div>
-            <a href="html/login.html" class="cta-button">Get Started</a>
+            <a href="login.html" class="cta-button">Get Started</a>
             <a href="#features" class="cta-button secondary-button">Learn More</a>
         </div>
     </section>
@@ -499,16 +502,16 @@ body.dark input, body.dark textarea, body.dark select {
 <section class="screenshots" id="screenshots">
     <h2 class="section-title">App Screenshots</h2>
     <div class="screenshot-container">
-        <img src="image/hom.png" alt="Dashboard view" class="screenshot">
-        <img src="image/sta.png" alt="Schedule view" class="screenshot">
-        <img src="image/adt.png" alt="Progress analytics" class="screenshot">
-        <img src="image/adn.png" alt="Resource library" class="screenshot">
-        <img src="image/cht.png" alt="All classes view" class="screenshot">
-        <img src="image/allt.png" alt="All tasks view" class="screenshot">
-        <img src="image/allc.png" alt="Chatbot view" class="screenshot">
-        <img src="image/prf.png" alt="statistic view" class="screenshot">
+        <!-- screenshot paths fixed (prepend ../ if screenshots are in project root) -->
+        <img src="../image/hom.png" alt="Dashboard view" class="screenshot">
+        <img src="../image/sta.png" alt="Schedule view" class="screenshot">
+        <img src="../image/adt.png" alt="Progress analytics" class="screenshot">
+        <img src="../image/adn.png" alt="Resource library" class="screenshot">
+        <img src="../image/cht.png" alt="All classes view" class="screenshot">
+        <img src="../image/allt.png" alt="All tasks view" class="screenshot">
+        <img src="../image/allc.png" alt="Chatbot view" class="screenshot">
+        <img src="../image/prf.png" alt="statistic view" class="screenshot">
     </div>
-    
 </section>
 
 
@@ -559,8 +562,11 @@ body.dark input, body.dark textarea, body.dark select {
     <!-- Service Worker Registration -->
     <script>
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("service-worker.js")
-                .then(() => console.log("Service Worker Registered"));
+            // Register the service worker using the correct relative path.
+            // If service-worker.js is in project root use '../service-worker.js'.
+            navigator.serviceWorker.register("../service-worker.js")
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.error("SW register failed:", err));
         }
     </script>
     

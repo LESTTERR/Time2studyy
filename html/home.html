@@ -6,7 +6,7 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <head>
   <!-- PWA Manifest for installable app support -->
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="../js/manifest.json">
   
   <!-- Character encoding and viewport for responsive design -->
   <meta charset="utf-8">
@@ -16,10 +16,10 @@
   <title>Study Planner – Home</title>
   
   <!-- External stylesheets (consider consolidating these 4 files) -->
-  <link rel="stylesheet" href="gome.css">      <!-- ⚠️ TRASH: Possible typo? Should be 'home.css'? -->
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="task.css">
-  <link rel="stylesheet" href="classcard.css">
+ 
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/task.css">
+  <link rel="stylesheet" href="../css/classcard.css">
   
   <!-- Google Fonts preconnect for better loading performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +32,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   
   <!-- Favicon displayed in browser tab -->
-  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="icon" type="image/png" href="../image/logo1.png">
   
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- INLINE STYLES: Calendar layout, animations, responsive design -->
@@ -172,7 +172,7 @@
   <div id="loadingScreen"
     style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:white;">
     <!-- App logo displayed during loading -->
-    <img src="logo.png" alt="Logo" style="width:120px; margin-bottom:20px;">
+    <img src="../image/logo1.png" alt="Logo" style="width:120px; margin-bottom:20px;">
     
     <!-- Animated loading bar with progress animation -->
     <div style="width:80%; height:4px; background:#ccc;">
@@ -280,53 +280,54 @@
 
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- TAB NAVIGATION BAR: Bottom navigation (mobile-style) -->
+  <!-- TAB NAVIGATION: injected from components/tabbar.html -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <nav class="tab-bar" style="display: none;">
-    <!-- Home tab: Shows calendar (functional) -->
-    <button class="tab-item active" data-target="homeSection">
-      <span class="material-icons">calendar_today</span>
-      <span class="tab-label">Home</span>
-    </button>
-    
-    <!-- Tasks tab: NO HANDLER IMPLEMENTED - TRASH CODE -->
-    <button class="tab-item" data-target="tasksSection">
-      <span class="material-icons">assignment</span>
-      <span class="tab-label">Tasks</span>
-    </button>
-    
-    <!-- Classes tab: NO HANDLER IMPLEMENTED - TRASH CODE -->
-    <button class="tab-item" data-target="classesSection">
-      <span class="material-icons">school</span>
-      <span class="tab-label">Classes</span>
-    </button>
-    
-    <!-- Profile tab: NO HANDLER IMPLEMENTED - TRASH CODE -->
-    <button class="tab-item" data-target="profileSection">
-      <span class="material-icons">person</span>
-      <span class="tab-label">Profile</span>
-    </button>
-  </nav>
+  <div id="tab-bar-container"></div>
+  <script>
+    (async function loadTabbar() {
+      try {
+        const res = await fetch('./components/tabsbar.html');
+        const html = await res.text();
+        const container = document.getElementById('tab-bar-container');
+        container.innerHTML = html;
+
+        // Execute any scripts included in the fetched fragment
+        container.querySelectorAll('script').forEach(s => {
+          const ns = document.createElement('script');
+          if (s.src) ns.src = s.src; else ns.textContent = s.textContent;
+          document.body.appendChild(ns);
+          s.remove();
+        });
+      } catch (err) {
+        console.error('Failed to load tab bar:', err);
+      }
+    })();
+  </script>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- EXTERNAL SCRIPTS: Firebase, utilities, main app logic -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   
   <!-- Main app script file -->
-  <script src="script.js"></script>
+  <script src="../js/script.js"></script>
 
   <!-- Firebase initialization module -->
-  <script type="module" src="firebase-init.js"></script>
+  <script type="module" src="../js/firebase-init.js"></script>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- MAIN APPLICATION LOGIC: Module imports + Firebase auth + Calendar -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <script type="module">
     // Firebase imports: Database and Authentication
-    import { db, auth } from "./firebase-init.js";
+    import { db, auth } from "../js/firebase-init.js";
     import { collection, query, orderBy, where, onSnapshot, getDocs  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     
+    // Expose auth (and db) to non-module scripts (chatbot code uses `auth`)
+    // This prevents "auth is not defined" in non-module code like sendMessageToDialogflow
+    window.auth = auth;
+    window.db = db;
+
     // Chart.js imports: Bar chart visualization for statistics
     import { Chart, LinearScale, CategoryScale, BarController, BarElement } from 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/+esm';
     // Register Chart.js components for use
@@ -698,18 +699,7 @@ onAuthStateChanged(auth, async (user) => {
       el.classList.add('selected-date');
     }
 
-    /* ═══════════════════════════════════════════════════════════════ */
-    /* FAB MAIN BUTTON: Toggle floating action button menu */
-    /* ═══════════════════════════════════════════════════════════════ */
-    const fabMain = document.getElementById('fabMain');
-    const fabOpts = document.querySelector('.fab-options');
-    if (fabMain) {
-      fabMain.addEventListener('click', () => {
-        fabMain.classList.toggle('open');
-        fabOpts.classList.toggle('show');
-        fabMain.textContent = fabMain.classList.contains('open') ? 'close' : 'add';
-      });
-    }
+   
 
     /* ═══════════════════════════════════════════════════════════════ */
     /* CHECK UPCOMING ALERTS: Notify user of classes/tasks within 2 hours */
@@ -742,14 +732,15 @@ onAuthStateChanged(auth, async (user) => {
           const today = now.toLocaleString('en-US', { weekday: 'long' });
 
           if (classDays.includes(today)) {
-            // Parse class start time
-            const [startH, startM] = c.time.split(" - ")[0].split(":").map(Number);
+            // Parse class start time (extract start portion before " - ")
+            const startStr = c.time.split(" - ")[0];
+            const [startH, startM] = startStr.split(":").map(Number);
             const classTime = new Date(now);
             classTime.setHours(startH, startM, 0, 0);
 
             // Alert if class starts within 2 hours
             if (classTime > now && classTime <= twoHoursLater) {
-              alertMessages.push(`Upcoming class "${c.name}" starts at ${c.time.split(" - ")[0]}`);
+              alertMessages.push(`Upcoming class "${c.name}" starts at ${startStr}`);
               showAlert = true;
             }
           }

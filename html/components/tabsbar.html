@@ -1,0 +1,58 @@
+<nav class="tab-bar" aria-label="Main navigation" style="display:none;gap:6px;align-items:center;justify-content:space-around;">
+  <a class="tab-item" href="home.html" data-target="homeSection" title="Home">
+    <span class="material-icons">calendar_today</span>
+    <span class="tab-label">Home</span>
+  </a>
+
+  <a class="tab-item" href="tasks.html" data-target="tasksSection" title="Tasks">
+    <span class="material-icons">assignment</span>
+    <span class="tab-label">Tasks</span>
+  </a>
+
+  <a class="tab-item" href="classes.html" data-target="classesSection" title="Classes">
+    <span class="material-icons">school</span>
+    <span class="tab-label">Classes</span>
+  </a>
+
+  <a class="tab-item" href="profile.html" data-target="profileSection" title="Profile">
+    <span class="material-icons">person</span>
+    <span class="tab-label">Profile</span>
+  </a>
+</nav>
+
+<script>
+  // Delegated handler: if target section exists on current page, switch sections in-place.
+  // Otherwise let the link navigate to the appropriate page.
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest('.tab-item');
+    if (!item) return;
+
+    const targetId = item.dataset.target;
+    const targetEl = targetId ? document.getElementById(targetId) : null;
+
+    if (targetEl) {
+      // Prevent navigation and switch content inside the page
+      e.preventDefault();
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      item.classList.add('active');
+
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      targetEl.classList.add('active');
+
+      // Optionally scroll to top or focus
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // No matching section here — ensure link proceeds to other page.
+      // Optionally add a small visual active state before navigation:
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      item.classList.add('active');
+      // default navigation happens
+    }
+  });
+
+  // When injected, expose a small helper to show the tab bar (your pages set .tab-bar display)
+  window.showTabBar = () => {
+    const bar = document.querySelector('.tab-bar');
+    if (bar) bar.style.display = 'flex';
+  };
+</script>
