@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/task.css">
   <link rel="stylesheet" href="../css/classcard.css">
+  <link rel="stylesheet" href="../css/loading.css">
   
   <!-- Google Fonts preconnect for better loading performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,6 +39,8 @@
   <!-- INLINE STYLES: Calendar layout, animations, responsive design -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <style>
+    /* Tab loading indicator */
+
     /* Main wrapper: Flex layout for calendar + schedule side-by-side (desktop) */
     .responsive-wrapper {
       display: flex;
@@ -162,62 +165,7 @@
     }
 
     /* Loading screen styles */
-    #loadingScreen {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: white;
-      z-index: 1000;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-    }
-
-    #loadingScreen img {
-      width: 96px;
-      margin-bottom: 18px;
-      filter: drop-shadow(0 6px 18px rgba(0,0,0,0.4));
-    }
-
-    .loading-spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      border-top: 4px solid #2196F3;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 12px;
-    }
-
-    .loading-text {
-      font-size: 1.2rem;
-      color: #333;
-      margin-bottom: 8px;
-    }
-
-    .loading-progress {
-      width: 80%;
-      height: 4px;
-      background: #eee;
-      border-radius: 2px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .loading-progress .bar {
-      height: 100%;
-      width: 0%;
-      background-color: #2196F3;
-      animation: loadbar 2s infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    
   </style>
 </head>
 
@@ -227,14 +175,9 @@
 <body>
 
   <!-- LOADING SCREEN: Shown on app startup (before authentication) -->
-  <div id="loadingScreen">
-    <img src="../image/logo1.png" alt="Logo" style="width:96px; margin-bottom:18px; filter:drop-shadow(0 6px 18px rgba(0,0,0,0.4));">
-    <div class="loading-spinner" aria-hidden="true"></div>
-    <div class="loading-text">Loading Study Planner…</div>
-    <div class="loading-progress" aria-hidden="true">
-      <div class="bar"></div>
-    </div>
-  </div>
+<div id="loadingScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;z-index:9999;">
+  <!-- Loader will be injected here -->
+</div>
 
   <!-- MAIN APPLICATION CONTAINER: Hidden until Firebase auth completes -->
   <div class="app-container" style="display: none;">
@@ -396,6 +339,7 @@
   /* ═══════════════════════════════════════════════════════════════ */
 /* FIREBASE AUTH CHECK: Only show app if user is logged in */
 /* ═══════════════════════════════════════════════════════════════ */
+/* FIREBASE AUTH CHECK */
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     // User authenticated: Initialize app components
@@ -404,17 +348,33 @@ onAuthStateChanged(auth, async (user) => {
     await checkUpcomingAlerts(user);
     await loadStatistics(user);
     
-    // Hide loading screen, show main app UI, tab bar, and chatbot FAB
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.querySelector('.app-container').style.display = 'block';
-    document.querySelector('.tab-bar').style.display = 'flex';
-    document.getElementById('chatbot-fab').style.display = 'flex';
-       
+    // mark auth/data ready so other scripts can safely hide loader
+    window._authFinished = true;
+
+    // Hide loading screen and show main app UI
+    hideLoadingScreen();
+    
   } else {
     // No authenticated user: Redirect to login page
     window.location.href = 'login.html';
   }
 });
+
+/* Function to hide loading screen and show app */
+function hideLoadingScreen() {
+  const loadingScreen = document.getElementById('loadingScreen');
+  const appContainer = document.querySelector('.app-container');
+  const tabBar = document.querySelector('.tab-bar');
+  const chatbotFab = document.getElementById('chatbot-fab');
+  
+  if (loadingScreen) loadingScreen.style.display = 'none';
+  if (appContainer) appContainer.style.display = 'block';
+  if (tabBar) tabBar.style.display = 'flex';
+  if (chatbotFab) chatbotFab.style.display = 'flex';
+  
+  // Clear any fail-safe timeout
+  if (window._clearLoaderFailSafe) window._clearLoaderFailSafe();
+}
 
     /* ═══════════════════════════════════════════════════════════════ */
     /* CALENDAR INITIALIZATION: Set up month navigation listeners */
@@ -532,79 +492,73 @@ onAuthStateChanged(auth, async (user) => {
     /* ═══════════════════════════════════════════════════════════════ */
     /* LOAD PENDING TASKS: Fetch and display upcoming tasks from Firebase */
     /* ═══════════════════════════════════════════════════════════════ */
-    async function loadPendingTasks(user) {
-      // Guard: Verify user exists before querying
-      if (!user || !user.uid) {
-        console.error("loadPendingTasks: User or user.uid is invalid.");
-        document.getElementById('pendingTasks').innerHTML = "<p style='text-align:center;color:red;'>Error: User not identified.</p>";
-        return;
-      }
-      
-      const pending = document.getElementById('pendingTasks');
-      
-      // Query: Get all tasks for this user, sorted by due date
-      const q = query(
-        collection(db, 'tasks'),
-        where("userId", "==", user.uid),
-        orderBy('dueDate')
-      );
-      
-      // Real-time listener: Update task list whenever database changes
-      return new Promise((resolve) => {
-        let first = true;
-        onSnapshot(q, (snapshot) => {
-          if (snapshot.empty) {
-            // No tasks found
-            pending.innerHTML = "<p style='text-align:center;color:gray;'>No pending tasks.</p>";
-          } else {
-            pending.innerHTML = '';
-            const now = new Date();
+    /* LOAD PENDING TASKS */
+async function loadPendingTasks(user) {
+  if (!user || !user.uid) {
+    console.error("loadPendingTasks: User or user.uid is invalid.");
+    document.getElementById('pendingTasks').innerHTML = "<p style='text-align:center;color:red;'>Error: User not identified.</p>";
+    return;
+  }
+  
+  const pending = document.getElementById('pendingTasks');
+  
+  // Show loading text while fetching
+  pending.innerHTML = '<div class="tab-loading">Fetching data...</div>';
+  
+  const q = query(
+    collection(db, 'tasks'),
+    where("userId", "==", user.uid),
+    orderBy('dueDate')
+  );
+  
+  return new Promise((resolve) => {
+    let first = true;
+    onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        pending.innerHTML = "<p style='text-align:center;color:gray;'>No pending tasks.</p>";
+      } else {
+        pending.innerHTML = '';
+        const now = new Date();
 
-            // Process each task document
-            snapshot.forEach(doc => {
-              const t = doc.data();
-              try {
-                // Convert Firebase timestamp to JavaScript Date
-                const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
+        snapshot.forEach(doc => {
+          const t = doc.data();
+          try {
+            const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
 
-                // Only show tasks with future due dates (not past-due)
-                if (due >= now) {
-                  const ti = document.createElement('div');
-                  const typeClass = t.type ? t.type.toLowerCase() : '';
-                  ti.className = `task-item ${typeClass}`;
+            if (due >= now) {
+              const ti = document.createElement('div');
+              const typeClass = t.type ? t.type.toLowerCase() : '';
+              ti.className = `task-item ${typeClass}`;
 
-                  // Create task card HTML
-                  ti.innerHTML = `
-                    <div class="task-info">
-                      <h4>${t.name}</h4>
-                      <p>${t.description}</p>
-                      <span class="deadline">Deadline: ${due.toLocaleDateString()}</span>
-                    </div>
-                  `;
-                  pending.appendChild(ti);
-                }
-              } catch (error) {
-                console.error('Error processing task:', error);
-              }
-            });
-          }
-          
-          // Resolve promise on first load (for await in caller)
-          if (first) {
-            first = false;
-            resolve();
-          }
-        }, (error) => {
-          // Firebase query error handler
-          console.error("Error getting tasks:", error);
-          pending.innerHTML = "<p style='text-align:center;color:red;'>Error loading tasks</p>";
-          if (first) {
-            first = false;
-            resolve();
+              ti.innerHTML = `
+                <div class="task-info">
+                  <h4>${t.name}</h4>
+                  <p>${t.description}</p>
+                  <span class="deadline">Deadline: ${due.toLocaleDateString()}</span>
+                </div>
+              `;
+              pending.appendChild(ti);
+            }
+          } catch (error) {
+            console.error('Error processing task:', error);
           }
         });
-      });
-    }
+      }
+      
+      if (first) {
+        first = false;
+        resolve();
+      }
+    }, (error) => {
+      console.error("Error getting tasks:", error);
+      pending.innerHTML = "<p style='text-align:center;color:red;'>Error loading tasks</p>";
+      if (first) {
+        first = false;
+        resolve();
+      }
+    });
+  });
+}
 
     /* ═══════════════════════════════════════════════════════════════ */
     /* SETUP DATE CLICK EVENTS: Add click handlers to calendar dates */
@@ -663,78 +617,70 @@ onAuthStateChanged(auth, async (user) => {
     /* ═══════════════════════════════════════════════════════════════ */
     /* SHOW SCHEDULE FOR DATE: Load classes for selected calendar date */
     /* ═══════════════════════════════════════════════════════════════ */
-    async function showFor(dayNum, month, year, user) {
-      const scheduleList = document.getElementById('scheduleList');
-      clearSchedule();
+    /* SHOW SCHEDULE FOR DATE */
+async function showFor(dayNum, month, year, user) {
+  const scheduleList = document.getElementById('scheduleList');
+  clearSchedule();
 
-      // Guard: Verify user exists
-      if (!user || !user.uid) {
-        console.error("showFor called with invalid user object or uid:", user);
-        scheduleList.innerHTML = "<p style='text-align:center;color:red;'>Error: User not identified for schedule.</p>";
-        return;
-      }
+  if (!user || !user.uid) {
+    console.error("showFor called with invalid user object or uid:", user);
+    scheduleList.innerHTML = "<p style='text-align:center;color:red;'>Error: User not identified for schedule.</p>";
+    return;
+  }
 
-      // Create date from passed parameters
-      const sel = new Date(year, month, dayNum);
-      // Get weekday name (e.g., "Mon", "Tue") to match class schedule
-      const wd = sel.toLocaleString('en-US', { weekday: 'short' });
+  // Show loading text while fetching
+  scheduleList.innerHTML = '<div class="tab-loading">Fetching data...</div>';
 
-      // Query: Get all classes for this user, sorted by start time
-      const q = query(
-        collection(db, 'classes'),
-        where("userId", "==", user.uid),
-        orderBy('time')
-      );
+  const sel = new Date(year, month, dayNum);
+  const wd = sel.toLocaleString('en-US', { weekday: 'short' });
 
-      // Real-time listener: Update schedule whenever classes change
-      onSnapshot(q,
-        (snapshot) => {
-          let found = false;
-          scheduleList.innerHTML = '';
+  const q = query(
+    collection(db, 'classes'),
+    where("userId", "==", user.uid),
+    orderBy('time')
+  );
 
-          // Process each class document
-          snapshot.forEach(doc => {
-            const c = doc.data();
-            // Split class days (e.g., "Mon, Wed, Fri") and match with selected day
-            const classDays = c.days.split(/,\s*/).map(d => d.substring(0, 3));
-            
-            if (classDays.includes(wd)) {
-              found = true;
-              
-              // Parse class time range (e.g., "9:00 - 10:30")
-              const [startTime, endTime] = c.time.split(' - ');
-              const [startHours, startMinutes] = startTime.split(':');
-              const [endHours, endMinutes] = endTime.split(':');
+  onSnapshot(q,
+    (snapshot) => {
+      let found = false;
+      scheduleList.innerHTML = '';
 
-              // Format time in 12-hour AM/PM format
-              const timeRange = `${to12HourFormat(parseInt(startHours), parseInt(startMinutes))} – ${to12HourFormat(parseInt(endHours), parseInt(endMinutes))}`;
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        const classDays = c.days.split(/,\s*/).map(d => d.substring(0, 3));
+        
+        if (classDays.includes(wd)) {
+          found = true;
+          
+          const [startTime, endTime] = c.time.split(' - ');
+          const [startHours, startMinutes] = startTime.split(':');
+          const [endHours, endMinutes] = endTime.split(':');
 
-              // Create schedule item card
-              const it = document.createElement('div');
-              it.className = 'schedule-item';
-              it.innerHTML = `
-                <div class="time">${timeRange}</div>
-                <div class="details">
-                  <h4>${c.name || 'Unnamed Class'}</h4>
-                  <p>${c.instructor || ''}</p>
-                </div>
-              `;
-              scheduleList.appendChild(it);
-            }
-          });
+          const timeRange = `${to12HourFormat(parseInt(startHours), parseInt(startMinutes))} – ${to12HourFormat(parseInt(endHours), parseInt(endMinutes))}`;
 
-          // Display message if no classes on this day
-          if (!found) {
-            scheduleList.innerHTML = "<p style='text-align:center;color:gray;'>No classes on this day.</p>";
-          }
-        },
-        (error) => {
-          // Firebase query error handler
-          console.error("Error getting classes for showFor:", error);
-          scheduleList.innerHTML = "<p style='text-align:center;color:red;'>Error loading schedule</p>";
+          const it = document.createElement('div');
+          it.className = 'schedule-item';
+          it.innerHTML = `
+            <div class="time">${timeRange}</div>
+            <div class="details">
+              <h4>${c.name || 'Unnamed Class'}</h4>
+              <p>${c.instructor || ''}</p>
+            </div>
+          `;
+          scheduleList.appendChild(it);
         }
-      );
+      });
+
+      if (!found) {
+        scheduleList.innerHTML = "<p style='text-align:center;color:gray;'>No classes on this day.</p>";
+      }
+    },
+    (error) => {
+      console.error("Error getting classes for showFor:", error);
+      scheduleList.innerHTML = "<p style='text-align:center;color:red;'>Error loading schedule</p>";
     }
+  );
+}
 
     /* ═══════════════════════════════════════════════════════════════ */
     /* CLEAR SCHEDULE: Empty the schedule list */
@@ -998,15 +944,24 @@ async function loadStatistics(user) {
       const tabContainer = document.getElementById('tab-bar-container');
 
       // Force background white (avoid accidental dark overlay from other CSS)
-      if (loading) loading.style.background = 'white';
+      if (loading) loading.style.background = 'black';
 
       function hideLoading() {
+        // Don't auto-hide loader when tab fragment injects unless user/auth is ready.
+        if (!window._authFinished && !window.auth?.currentUser) {
+          // keep loader visible until auth+data finish (fail-safe will still clear after timeout)
+          return;
+        }
+
         if (loading) loading.style.display = 'none';
         if (app) app.style.display = 'block';
         const tb = document.querySelector('.tab-bar');
         if (tb) tb.style.display = 'flex';
         const fab = document.getElementById('chatbot-fab');
         if (fab) fab.style.display = 'flex';
+
+        // clear the fail-safe timeout so it doesn't run after we intentionally hid the loader
+        window._clearLoaderFailSafe?.();
       }
 
       // Hide when tab fragment is clicked
@@ -1027,7 +982,23 @@ async function loadStatistics(user) {
 
       // Expose helper for other scripts
       window.hideLoadingScreen = hideLoading;
+
     })();
+
+
+
+
+    
+    (async function loadLoader() {
+    try {
+      const res = await fetch('./components/loader.html');
+      const html = await res.text();
+      const container = document.getElementById('loadingScreen');
+      container.innerHTML = html;
+    } catch (err) {
+      console.error('Failed to load loader:', err);
+    }
+  })();
   </script>
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- CHATBOT SCRIPT: Handle FAB interaction and message sending -->

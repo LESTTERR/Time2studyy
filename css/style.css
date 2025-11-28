@@ -45,6 +45,13 @@ html {
   background-repeat: no-repeat;
   background-size: cover;
 }
+/* Tab loading indicator */
+.tab-loading {
+  text-align: center;
+  padding: 1rem;
+  color: #666;
+  font-style: italic;
+}
 
 body {
   font-family: 'M PLUS Rounded 1c', sans-serif;
