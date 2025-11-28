@@ -160,6 +160,64 @@
     .nav-button .material-icons {
       font-size: 24px;
     }
+
+    /* Loading screen styles */
+    #loadingScreen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: white;
+      z-index: 1000;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    #loadingScreen img {
+      width: 96px;
+      margin-bottom: 18px;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,0.4));
+    }
+
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-top: 4px solid #2196F3;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    .loading-text {
+      font-size: 1.2rem;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .loading-progress {
+      width: 80%;
+      height: 4px;
+      background: #eee;
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .loading-progress .bar {
+      height: 100%;
+      width: 0%;
+      background-color: #2196F3;
+      animation: loadbar 2s infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 
@@ -169,14 +227,12 @@
 <body>
 
   <!-- LOADING SCREEN: Shown on app startup (before authentication) -->
-  <div id="loadingScreen"
-    style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:white;">
-    <!-- App logo displayed during loading -->
-    <img src="../image/logo1.png" alt="Logo" style="width:120px; margin-bottom:20px;">
-    
-    <!-- Animated loading bar with progress animation -->
-    <div style="width:80%; height:4px; background:#ccc;">
-      <div class="loading-bar"></div>
+  <div id="loadingScreen">
+    <img src="../image/logo1.png" alt="Logo" style="width:96px; margin-bottom:18px; filter:drop-shadow(0 6px 18px rgba(0,0,0,0.4));">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <div class="loading-text">Loading Study Planner…</div>
+    <div class="loading-progress" aria-hidden="true">
+      <div class="bar"></div>
     </div>
   </div>
 
@@ -776,100 +832,88 @@ onAuthStateChanged(auth, async (user) => {
 /* LOAD STATISTICS: Fetch data and render bar chart of study stats */
 /* ═══════════════════════════════════════════════════════════════ */
 async function loadStatistics(user) {
-  // Guard: Verify user exists
   if (!user || !user.uid) {
     console.error("loadStatistics: User or user.uid is invalid.");
     return;
   }
   
-  // Check if canvas element exists
   const canvas = document.getElementById('myBarChart');
   if (!canvas) {
     console.warn("Statistics chart canvas not found in HTML");
     return;
   }
 
-  // Query: Get all classes and tasks for this user
   const classesRef = query(collection(db, 'classes'), where("userId", "==", user.uid));
   const tasksRef = query(collection(db, 'tasks'), where("userId", "==", user.uid));
 
-  // Store unsubscribe functions for cleanup
   const unsubs = [];
+  // Return a promise that resolves after first chart is created
+  return new Promise((resolve, reject) => {
+    const classesUnsub = onSnapshot(classesRef, (classSnap) => {
+      const tasksUnsub = onSnapshot(tasksRef, (taskSnap) => {
+        try {
+          const totalClasses = classSnap.size;
+          const totalTasks = taskSnap.size;
+          let completedTasks = 0;
+          let pendingTasks = 0;
+          taskSnap.forEach(doc => {
+            const task = doc.data();
+            task.completed ? completedTasks++ : pendingTasks++;
+          });
 
-  // Listen for class data changes
-  const classesUnsub = onSnapshot(classesRef, (classSnap) => {
-    // Listen for task data changes (nested listener)
-    const tasksUnsub = onSnapshot(tasksRef, (taskSnap) => {
-      // Count total classes and tasks
-      const totalClasses = classSnap.size;
-      const totalTasks = taskSnap.size;
-      let completedTasks = 0;
-      let pendingTasks = 0;
-
-      // Count completed vs pending tasks
-      taskSnap.forEach(doc => {
-        const task = doc.data();
-        task.completed ? completedTasks++ : pendingTasks++;
-      });
-
-      // Get canvas context for chart
-      const ctx = canvas.getContext('2d');
-      
-      // Destroy previous chart instance if exists (prevent memory leaks)
-      if (window.myChart && typeof window.myChart.destroy === 'function') {
-        window.myChart.destroy();
-      }
-
-      // Create new bar chart with study statistics
-      window.myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Classes', 'Total Tasks', 'Completed', 'Pending'],
-          datasets: [{
-            label: 'Study Statistics',
-            data: [totalClasses, totalTasks, completedTasks, pendingTasks],
-            backgroundColor: [
-              'rgba(78, 115, 223, 0.8)',    // Blue for classes
-              'rgba(54, 185, 204, 0.8)',    // Teal for total tasks
-              'rgba(28, 200, 138, 0.8)',    // Green for completed
-              'rgba(246, 194, 62, 0.8)'     // Yellow for pending
-            ],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: 'Study Statistics', padding: 20 }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { stepSize: 1, precision: 0 },
-              grid: { display: true }
-            },
-            x: { grid: { display: false } }
+          const ctx = canvas.getContext('2d');
+          if (window.myChart && typeof window.myChart.destroy === 'function') {
+            window.myChart.destroy();
           }
-        }
-      });
-    }, (error) => {
-      console.error("Error fetching tasks for statistics:", error);
-    });
-    unsubs.push(tasksUnsub);
-  }, (error) => {
-    console.error("Error fetching classes for statistics:", error);
-  });
-  unsubs.push(classesUnsub);
 
-  // Return cleanup function to caller
-  return () => {
-    unsubs.forEach(unsub => unsub());
-    if (window.myChart) {
-      window.myChart.destroy();
-    }
-  };
+          window.myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Classes', 'Total Tasks', 'Completed', 'Pending'],
+              datasets: [{
+                label: 'Study Statistics',
+                data: [totalClasses, totalTasks, completedTasks, pendingTasks],
+                backgroundColor: [
+                  'rgba(78, 115, 223, 0.8)',
+                  'rgba(54, 185, 204, 0.8)',
+                  'rgba(28, 200, 138, 0.8)',
+                  'rgba(246, 194, 62, 0.8)'
+                ],
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false }, title: { display: true, text: 'Study Statistics', padding: 20 } },
+              scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { display: true } },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+
+          // resolve after first successful chart draw
+          resolve(() => {
+            // cleanup function returned to caller if needed
+            unsubs.forEach(u => u());
+            if (window.myChart) window.myChart.destroy();
+          });
+        } catch (err) {
+          console.error("Error creating statistics chart:", err);
+          reject(err);
+        }
+      }, (error) => {
+        console.error("Error fetching tasks for statistics:", error);
+        reject(error);
+      });
+      unsubs.push(tasksUnsub);
+    }, (error) => {
+      console.error("Error fetching classes for statistics:", error);
+      reject(error);
+    });
+    unsubs.push(classesUnsub);
+  });
 }
     /* ═══════════════════════════════════════════════════════════════ */
     /* SHOW NOTIFICATION: Display temporary toast notification to user */
@@ -920,143 +964,76 @@ async function loadStatistics(user) {
   <!-- ═══════════════════════════════════════════════════════════════ -->
  <script>
   const loadingScreen = document.getElementById('loadingScreen');
+  // keep initial UI elements hidden; auth handler will show them when ready
   const tabBar = document.querySelector('.tab-bar');
   const chatbotFab = document.getElementById('chatbot-fab');
   const appContainer = document.querySelector('.app-container');
-
-  /* Logic for managing loading screen behavior:
-     - First visit: Show 2s loading animation
-     - After login redirect: Show 2s loading animation  
-     - Already shown: Skip animation, show app immediately */
-  const flag = sessionStorage.getItem('loggedIn');
-
-  // IMPORTANT: Keep tab bar and chatbot FAB hidden initially
   if (tabBar) tabBar.style.display = 'none';
   if (chatbotFab) chatbotFab.style.display = 'none';
   if (appContainer) appContainer.style.display = 'none';
 
-  if (flag === 'true') {
-    // After login redirect: Show loading for 2 seconds
-    setTimeout(() => {
-      if (loadingScreen) loadingScreen.style.display = 'none';
-      // DON'T show tab bar and chatbot here - let Firebase auth handle it
-      sessionStorage.setItem('loggedIn', 'done');
-    }, 2000);
-  } else if (!flag) {
-    // First-time visit: Show loading screen once for 2 seconds
-    setTimeout(() => {
-      if (loadingScreen) loadingScreen.style.display = 'none';
-      // DON'T show tab bar and chatbot here - let Firebase auth handle it
-      sessionStorage.setItem('loggedIn', 'done');
-    }, 2000);
-  } else {
-    // Already shown loading earlier: Skip animation
-    if (loadingScreen) loadingScreen.style.display = 'none';
-    // DON'T show tab bar and chatbot here - let Firebase auth handle it
+  // Record that loader was shown (prevent repeated long animations)
+  if (!sessionStorage.getItem('loaderShown')) {
+    sessionStorage.setItem('loaderShown', 'true');
   }
+
+  // Fail-safe: if auth never resolves, hide loader after 8s to avoid permanent block
+  const failSafe = setTimeout(() => {
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    if (appContainer) appContainer.style.display = 'block';
+    if (tabBar) tabBar.style.display = 'flex';
+    if (chatbotFab) chatbotFab.style.display = 'flex';
+    console.warn('Loader hidden by fail-safe timeout');
+  }, 8000);
+
+  // Expose function so auth handler can clear the timeout when it hides the loader
+  window._clearLoaderFailSafe = () => clearTimeout(failSafe);
 </script>
 
- 
+  <!-- ensure loading screen doesn't re-block UI when tabs change -->
+  <script>
+    (function(){
+      const loading = document.getElementById('loadingScreen');
+      const app = document.querySelector('.app-container');
+      const tabContainer = document.getElementById('tab-bar-container');
+
+      // Force background white (avoid accidental dark overlay from other CSS)
+      if (loading) loading.style.background = 'white';
+
+      function hideLoading() {
+        if (loading) loading.style.display = 'none';
+        if (app) app.style.display = 'block';
+        const tb = document.querySelector('.tab-bar');
+        if (tb) tb.style.display = 'flex';
+        const fab = document.getElementById('chatbot-fab');
+        if (fab) fab.style.display = 'flex';
+      }
+
+      // Hide when tab fragment is clicked
+      tabContainer?.addEventListener('click', (e) => {
+        if (e.target.closest('a, button, .tab-item, .tab-link')) {
+          hideLoading();
+        }
+      });
+
+      // Listen for optional custom event other code might dispatch
+      document.addEventListener('tab-change', hideLoading);
+
+      // If the tab fragment is injected, ensure loading is hidden
+      const mo = new MutationObserver((mutations) => {
+        if (tabContainer && tabContainer.children.length) hideLoading();
+      });
+      if (tabContainer) mo.observe(tabContainer, { childList: true, subtree: true });
+
+      // Expose helper for other scripts
+      window.hideLoadingScreen = hideLoading;
+    })();
+  </script>
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- CHATBOT SCRIPT: Handle FAB interaction and message sending -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <script>
-    // DOM elements for chatbot UI
-    const fab = document.getElementById('chatbot-fab');
-    const chatWindow = document.getElementById('chatbot-window');
-    const closeBtn = document.getElementById('chatbot-close');
-    const sendBtn = document.getElementById('chatbot-send');
-    const input = document.getElementById('userInput');
-    const messages = document.getElementById('messages');
+  <script src="../js/chatbot.js"></script>
 
-    /* Show chatbot window: Click FAB to open chat */
-    fab.onclick = () => {
-      chatWindow.style.display = 'flex';
-      fab.style.display = 'none';
-      input.focus();
-    };
-
-    /* Hide chatbot window: Click close button */
-    closeBtn.onclick = () => {
-      chatWindow.style.display = 'none';
-      fab.style.display = 'flex';
-    };
-
-    /* Send message on button click OR Enter key */
-    sendBtn.onclick = sendMessage;
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') sendMessage();
-    });
-
-    /* SEND MESSAGE: Process user input and send to Dialogflow API */
-    async function sendMessage() {
-      const text = input.value.trim();
-      if (!text) return;
-      
-      // Add user message to chat
-      addMessage('user', text);
-      input.value = '';
-      
-      // Disable input while processing
-      input.disabled = true;
-      sendBtn.disabled = true;
-      
-      // Send to Dialogflow AI backend
-      await sendMessageToDialogflow(text);
-      
-      // Re-enable input
-      input.disabled = false;
-      sendBtn.disabled = false;
-      input.focus();
-    }
-
-    /* SEND TO DIALOGFLOW: Call API endpoint with user message */
-    async function sendMessageToDialogflow(message) {
-      // Use Firebase user ID for session tracking, or 'guest' if logged out
-      const sessionId = auth.currentUser ? auth.currentUser.uid : 'guest';
-      
-      // Show loading indicator
-      addMessage('bot', '...');
-      
-      try {
-        // Call Dialogflow API endpoint
-        const response = await fetch('https://frontendapichatbot.vercel.app/api/dialogflow', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, sessionId })
-        });
-        const data = await response.json();
-        
-        // Remove loading indicator and show AI response
-        messages.removeChild(messages.lastChild);
-        addMessage('bot', data.reply || 'Sorry, no reply.');
-      } catch (err) {
-        // Error handling: Show error message if API fails
-        messages.removeChild(messages.lastChild);
-        addMessage('bot', 'Error connecting to server.');
-      }
-    }
-
-    /* ADD MESSAGE: Append message to chat (user or bot) */
-    function addMessage(sender, text) {
-      const msg = document.createElement('div');
-
-      // Apply CSS class based on sender (user vs bot)
-      if (sender === 'user') {
-        msg.className = 'user-message';
-      } else {
-        msg.className = 'bot-message';
-      }
-
-      // Set message text content
-      msg.textContent = text;
-      messages.appendChild(msg);
-
-      // Auto-scroll to bottom of messages
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-  </script>
 
 </body>
 
