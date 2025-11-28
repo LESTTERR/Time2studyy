@@ -1,257 +1,308 @@
-/* ---------- Full Task Card / Header ---------- */
+/* ------------------------------
+   FULL TASK CARD (CLEAN VERSION)
+--------------------------------*/
+
+
+.full-task-card {
+    background: #020202;
+    border: 1px solid #000000;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    margin: 0 20px;            /* No top spacing */
+    display: flex;
+    flex-direction: column;
+
+    max-height: calc(100vh - 20px);
+    overflow: hidden;          /* Clean scroll inside only */
+    transition: all 0.3s ease;
+}
+
+.full-task-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+/* ------------------------------
+   HEADER
+--------------------------------*/
+
 .full-task-card .card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 0.75rem;
-  border-bottom: var(--border);
-  margin-bottom: 1rem;
+    background: #000000;
+    padding: 20px 24px;
+    border-bottom: 1px solid #00000000;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .full-task-card .card-header h3 {
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin: 0;
-  line-height: 1;
+    margin: 0;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .full-task-card .card-header .material-icons {
-  font-size: 1.7rem;
-  color: #4a5568;
-  display: inline-flex;
-  align-items: center;
-  line-height: 1;
+    color: #fff;
+    font-size: 1.5rem;
+   
 }
 
-/* ---------- Buttons (consolidated) ---------- */
-.btn {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.85rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: transform 0.15s ease, opacity 0.15s ease, background 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+/* ------------------------------
+   TASK LIST AREA
+--------------------------------*/
+
+.full-task-card .task-list {
+    background: #050505;
+    flex: 1;
+    overflow-y: auto;
+
+    padding: 0;
 }
 
-.btn:active { transform: scale(0.98); }
-
-/* Action buttons */
-.btn--done {
-  background: var(--primary);
-  color: #fff;
+/* Scrollbar */
+.full-task-card .task-list::-webkit-scrollbar {
+    width: 8px;
 }
 
-.btn--delete {
-  background: var(--accent);
-  color: #fff;
+.full-task-card .task-list::-webkit-scrollbar-track {
+    background: #1f1e1e;
+    border-radius: 4px;
 }
 
-/* Hover micro animation */
-.btn--done:hover,
-.btn--delete:hover {
-  transform: scale(1.05);
-  opacity: 0.98;
+.full-task-card .task-list::-webkit-scrollbar-thumb {
+    background: #2d3748;
+    border-radius: 4px;
 }
 
-/* Actions container */
-.task-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-start;
-  margin-top: 0.5rem;
+.full-task-card .task-list::-webkit-scrollbar-thumb:hover {
+    background: #060606;
 }
 
-/* If you want a compact variant for icon-only buttons */
-.btn--icon {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  justify-content: center;
-  border-radius: 10px;
+/* ------------------------------
+   TASK ITEM
+--------------------------------*/
+
+.full-task-card .task-item {
+    background: rgb(42, 43, 45);
+    padding: 20px 24px;
+    border-bottom: 1px solid #171717;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+
+    transition: 0.2s ease;
+    animation: slideIn 0.3s ease-out;
 }
 
-/* ---------- Small helpers & date selection ---------- */
-.selected-date {
-  background-color: #2196F3;
-  color: #fff;
-  border-radius: 50%;
-  padding: 5px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  min-height: 24px;
+.full-task-card .task-item:last-child {
+    border-bottom: none;
 }
 
-/* ---------- Task type color utilities ---------- */
-/* Use either class names or capitalized names depending on your markup */
-.task-item.assignment,
-.task-item.Assignment { --task-color: rgb(0, 184, 95); }
-
-.task-item.project,
-.task-item.Project { --task-color: rgb(255, 0, 0); }
-
-/* ---------- Responsive ---------- */
-@media (max-width: 480px) {
-  .task-card,
-  .task-item,
-  .class-item {
-    padding: 0.8rem;
-    border-radius: 14px;
-  }
-
-  .task-card h3 { font-size: 1.05rem; }
-
-  .task-info h4 { font-size: 1rem; }
-  .task-info p { font-size: 0.88rem; }
-
-  .btn { font-size: 0.8rem; padding: 0.28rem 0.6rem; }
-  .btn--icon { width: 34px; height: 34px; }
+.full-task-card .task-item:hover {
+    background: #5a6578;
+    transform: translateX(4px);
 }
 
-/* Slightly larger touch targets for tablets */
-@media (min-width: 481px) and (max-width: 1024px) {
-  .task-card,
-  .task-item,
-  .class-item {
-    padding: 0.95rem 1rem;
-  }
-
-  .task-card h3 { font-size: 1.12rem; }
-
-  .task-info h4 { font-size: 1.05rem; }
+.full-task-card .task-item.done {
+    background: #2d5a2d;
+    opacity: 0.85;
 }
 
-/* ---------- Accessibility / focus states ---------- */
-.btn:focus,
-.btn--icon:focus {
-  outline: 3px solid rgba(62, 150, 255, 0.18);
-  outline-offset: 2px;
+.full-task-card .task-item.done h4 {
+    color: #a0aec0;
+    text-decoration: line-through;
 }
 
-/* ---------- Layout & Task Item polish ---------- */
-/* Improve spacing, background, border and transitions for task items */
-.task-item {
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.85rem;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 1px 4px rgba(10, 10, 10, 0.03);
-  align-items: flex-start;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-  margin: 0.6rem 0;
+/* ------------------------------
+   TASK TEXT INFO
+--------------------------------*/
+
+.full-task-card .task-info {
+    flex: 1;
+    min-width: 0;
 }
 
-/* Slight lift on hover for pointer devices */
-@media (hover: hover) {
-  .task-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  }
+.full-task-card .task-info h4 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #fff;
 }
 
-/* Task info column expands */
-.task-info {
-  flex: 1 1 auto;
-}
-
-/* Headings & text readability */
-.task-info h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.05rem;
-  line-height: 1.2;
-  color: #222;
-}
-
-.task-info p {
-  margin: 0;
-  color: #555;
-  font-size: 0.95rem;
+.full-task-card .task-info p {
+    margin: 0 0 12px;
+    color: #e2e8f0;
+    font-size: 0.95rem;
 }
 
 /* Deadline badge */
-.deadline {
-  display: inline-block;
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: #444;
-  background: rgba(33,150,243,0.06);
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
+.full-task-card .deadline {
+    display: inline-block;
+    background: #718096;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
-/* Action buttons use consolidated classes defined earlier */
-.task-actions { margin-left: 0.5rem; align-self: center; }
-
-/* Done state: subdued, readable strike-through */
-.task-item.done {
-  opacity: 0.6;
-  background: linear-gradient(180deg, #f8f9fb, #fbfbfc);
-  border-color: rgba(0,0,0,0.04);
+/* Task type tag */
+.full-task-card .task-info .task-type {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
 }
 
-.task-item.done .task-info h4,
-.task-item.done .task-info p,
-.task-item.done .task-info .deadline {
-  text-decoration: line-through;
-  color: #7b7f84;
+/* ------------------------------
+   ACTION BUTTONS
+--------------------------------*/
+
+.full-task-card .task-actions {
+    display: flex;
+    gap: 8px;
 }
 
-/* ---------- Tab bar: bottom fixed navigation (mobile-first) ---------- */
-
-
-
-/* ---------- Theme sync: make tasks page match home.html dark theme ---------- */
-/* Uses variables defined in style.css (var(--card-bg), var(--text), etc.) */
-
-.task-card,
-.task-item,
-.full-task-card,
-.task-list,
-.task-actions {
-  background: var(--card-bg) !important;
-  color: var(--text) !important;
-  box-shadow: var(--shadow) !important;
-  border: var(--border) !important;
+.full-task-card .done-btn {
+    background: #48bb78;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
-/* Ensure task text contrast */
-.task-info h4,
-.task-info p,
-.task-card h3 {
-  color: var(--text) !important;
+.full-task-card .done-btn:hover {
+    background: #38a169;
 }
 
-/* Use task-type color for the left border but keep dark background */
-.task-item {
-  border-left: 6px solid var(--task-color, var(--accent));
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+.full-task-card .done-btn:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
 }
 
-/* Deadline badge tuned for dark theme */
-.deadline {
-  background: rgba(255,255,255,0.04);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,0.04);
+.full-task-card .delete-btn {
+    background: #4a0000;
+    color: #ffb5b5;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 10px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
-/* Done state: subdued but readable on dark bg */
-.task-item.done {
-  opacity: 0.7;
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.06));
-  border-color: rgba(255,255,255,0.03);
-}
-.task-item.done .task-info h4,
-.task-item.done .task-info p,
-.task-item.done .deadline {
-  text-decoration: line-through;
-  color: rgba(230,238,248,0.6);
+.full-task-card .delete-btn:hover {
+    background: #8b1010;
+    transform: scale(1.08);
 }
 
+/* ------------------------------
+   EMPTY STATE
+--------------------------------*/
 
+.full-task-card .empty-tasks {
+    text-align: center;
+    padding: 60px 20px;
+    color: #a0aec0;
+    background: #0b0b0b;
+    font-style: italic;
+}
+
+/* ------------------------------
+   ANIMATIONS
+--------------------------------*/
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ------------------------------
+   RESPONSIVE DESIGN
+--------------------------------*/
+
+@media (max-width: 768px) {
+    .full-task-card {
+        margin: 0 10px;
+        border-radius: 12px;
+    }
+
+    .task-item {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .task-actions {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .full-task-card {
+        margin: 0 8px;
+        border-radius: 10px;
+    }
+
+    .task-item {
+        padding: 14px 16px;
+    }
+}
+
+/* Header layout */
+.card-header {
+  display: flex;
+  justify-content: space-between; /* Title left, button right */
+  align-items: center;
+  padding: 16px 20px;
+}
+
+/* New header FAB style */
+.fab-header {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: #38c0ff;
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+  transition: 0.15s ease;
+}
+
+.fab-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+}

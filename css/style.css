@@ -21,6 +21,40 @@
 
 /* ========== Base Reset ========== */
 
+/* GENERAL layout for all content-sections */
+.content-section {
+  display: none;
+}
+
+/* HOME section keeps natural layout */
+#homeSection {
+  display: none;
+  position: relative;     /* normal flow */
+  width: 100%;
+  height: auto;           /* don't force height */
+  overflow-y: visible;    /* allow calendar layout */
+}
+
+/* Other sections become full-screen pages */
+#tasksSection,
+#classesSection,
+#profileSection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 60px); /* minus tab bar */
+  overflow-y: auto;
+}
+
+/* Only the active section becomes visible */
+.content-section.active {
+  display: block;
+}
+
+
+
+
 * {
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
@@ -607,4 +641,78 @@ body {
 #chatbot-send .material-icons {
     color: white;
     font-size: 24px;
+}
+
+
+/* DASHBOARD GRID */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 18px;
+  padding: 20px;
+}
+
+/* CIRCLE CARDS */
+.circle-card {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  padding: 18px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 15px rgba(0,255,255,0.1);
+}
+
+/* Circular progress container */
+.circle-progress {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  margin: 0 auto 10px auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(var(--accent-color) 0deg, rgba(255,255,255,0.2) 0deg);
+}
+
+.circle-value {
+  position: absolute;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: white;
+}
+
+.circle-label {
+  color: white;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+/* STAT CARDS */
+.stat-card {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 20px;
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.stat-card span {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+/* Accent Color (Neon Aqua) */
+:root {
+  --accent-color: #3df2ff;
 }
