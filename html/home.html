@@ -19,7 +19,8 @@
  
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/task.css">
-    <link rel="stylesheet" href="../css/tasks.css">
+  <link rel="stylesheet" href="../css/tasks.css">
+  <link rel="stylesheet" href="../css/classes.css">
   <link rel="stylesheet" href="../css/classcard.css">
   <link rel="stylesheet" href="../css/loading.css">
   
@@ -54,8 +55,7 @@
     /* Calendar and task sections: Width and sizing rules */
     .calendar-card,
     .schedule-task-wrapper {
-      min-width: 365px;
-      min-width: 100%;  /* ⚠️ TRASH: Overwrites line above, remove first min-width */
+      min-width: 100%;
       width: 100%;
       flex-shrink: 1;
     }
@@ -67,18 +67,11 @@
       gap: 1rem;
     }
     
-    /* Tablet/Desktop (768px+): Add margin-top spacing (purpose unclear - consider removing) */
-    @media (min-width: 768px) {  
-      .schedule-task-wrapper {
-        margin-top: 31px;  /* ⚠️ TRASH: Magic number, no clear design reason */
-      }
-    }
 
     /* Tablet/Desktop (768px+): Wider layout with larger min-width */
     @media (min-width: 768px) {  
       .calendar-card,
       .schedule-task-wrapper {
-        gap: 10px;  /* ⚠️ TRASH: Should be on .responsive-wrapper parent, not children */
         min-width: 600px;
       }
     }
@@ -252,85 +245,86 @@
       </div>
     </div>
 
-  </div>
-
-
-   <!-- TASKS SECTION (moved from tasks.html) -->
-  <div class="content-section" id="tasksSection">
-  <div class="full-task-card">
-
-    <div class="card-header">
-
-      <h3>
-        <span class="material-icons">assignment</span>
-        All Tasks
-      </h3>
-
-      <!-- FAB moved into header (RIGHT SIDE) -->
-      <button id="addTaskFab" class="fab-header material-icons">add</button>
-
-    </div>
-
-    <div class="task-list" id="tasksList">
-      <!-- Tasks will be loaded here from Firestore -->
-    </div>
-
-  </div>
-</div>
-
-<section id="dashboardSection" class="page-section" style="display:none;">
-
-  <div class="dashboard-grid">
-
-    <!-- Circular Progress Cards -->
-    <div class="circle-card">
-      <div class="circle-progress" id="progressTasks">
-        <span class="circle-value" id="progressTasksValue">0%</span>
+    <!-- TASKS SECTION (moved from tasks.html) -->
+    <div class="content-section" id="tasksSection">
+      <div class="full-task-card">
+        <div class="card-header">
+          <h3>
+            <span class="material-icons">assignment</span>
+            All Tasks
+          </h3>
+          <!-- FAB moved into header (RIGHT SIDE) -->
+          <button id="addTaskFab" class="fab-header material-icons">add</button>
+        </div>
+        <div class="task-list" id="tasksList">
+          <!-- Tasks will be loaded here from Firestore -->
+        </div>
       </div>
-      <p class="circle-label">Task Completion</p>
     </div>
 
-    <div class="circle-card">
-      <div class="circle-progress" id="progressClasses">
-        <span class="circle-value" id="progressClassesValue">0%</span>
+    <!-- DASHBOARD SECTION -->
+    <div class="content-section" id="dashboardSection">
+      <div class="dashboard-grid">
+        <!-- Circular Progress Cards -->
+        <div class="circle-card">
+          <div class="circle-progress" id="progressTasks">
+            <span class="circle-value" id="progressTasksValue">0%</span>
+          </div>
+          <p class="circle-label">Task Completion</p>
+        </div>
+
+        <div class="circle-card">
+          <div class="circle-progress" id="progressClasses">
+            <span class="circle-value" id="progressClassesValue">0%</span>
+          </div>
+          <p class="circle-label">Classes Attended</p>
+        </div>
+
+        <!-- Square Stats -->
+        <div class="stat-card">
+          <h3>Total Tasks</h3>
+          <span id="statTotalTasks">0</span>
+        </div>
+
+        <div class="stat-card">
+          <h3>Completed Tasks</h3>
+          <span id="statCompleted">0</span>
+        </div>
+
+        <div class="stat-card">
+          <h3>Pending Tasks</h3>
+          <span id="statPending">0</span>
+        </div>
+
+        <div class="stat-card">
+          <h3>Total Classes</h3>
+          <span id="statTotalClasses">0</span>
+        </div>
       </div>
-      <p class="circle-label">Classes Attended</p>
     </div>
 
-
-    <!-- Square Stats -->
-    <div class="stat-card">
-      <h3>Total Tasks</h3>
-      <span id="statTotalTasks">0</span>
+    <!-- CLASSES SECTION (moved from classes.html) -->
+    <div class="content-section" id="classesSection">
+      <div class="full-class-card">
+        <div class="card-header">
+          <h3>
+            <span class="material-icons">school</span>
+            All Classes
+          </h3>
+          <!-- FAB moved into header (RIGHT SIDE) -->
+          <button id="addClassFab" class="fab-header material-icons">add</button>
+        </div>
+        <div class="class-list" id="classesList">
+          <!-- Classes will be loaded here from Firestore -->
+        </div>
+      </div>
     </div>
 
-    <div class="stat-card">
-      <h3>Completed Tasks</h3>
-      <span id="statCompleted">0</span>
+    <!-- PROFILE SECTION (moved from profile.html) -->
+    <div class="content-section" id="profileSection">
+      <!-- paste the main content from profile.html here -->
     </div>
 
-    <div class="stat-card">
-      <h3>Pending Tasks</h3>
-      <span id="statPending">0</span>
-    </div>
-
-    <div class="stat-card">
-      <h3>Total Classes</h3>
-      <span id="statTotalClasses">0</span>
-    </div>
-  </div>
-
-</section>
-
-
-  <!-- CLASSES SECTION (moved from classes.html) -->
-  <div class="content-section" id="classesSection">
-    <!-- paste the main content from classes.html here -->
-  </div>
-
-  <!-- PROFILE SECTION (moved from profile.html) -->
-  <div class="content-section" id="profileSection">
-    <!-- paste the main content from profile.html here -->
   </div>
 
    <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -434,7 +428,7 @@
   <script type="module">
     // Firebase imports: Database and Authentication
     import { db, auth } from "../js/firebase-init.js";
-    import { collection, query, orderBy, where, onSnapshot, getDocs  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { collection, query, orderBy, where, onSnapshot, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     
     // Expose auth (and db) to non-module scripts (chatbot code uses `auth`)
@@ -462,6 +456,8 @@ onAuthStateChanged(auth, async (user) => {
     await loadPendingTasks(user);
     await checkUpcomingAlerts(user);
     await loadStatistics(user);
+    initializeClassesSection(user);
+    initializeTasksSection(user);
     
     // mark auth/data ready so other scripts can safely hide loader
     window._authFinished = true;
@@ -490,6 +486,188 @@ function hideLoadingScreen() {
   // Clear any fail-safe timeout
   if (window._clearLoaderFailSafe) window._clearLoaderFailSafe();
 }
+
+
+
+ /* ═══════════════════════════════════════════════════════════════ */
+  /* CLASSES SECTION LOGIC: Load and display all classes from Firestore */
+  /* ═══════════════════════════════════════════════════════════════ */
+  function initializeClassesSection(user) {
+    const classesList = document.getElementById("classesList");
+
+const displayClasses = (classes) => {
+      classesList.innerHTML = "";
+
+      if (!classes.length) {
+        classesList.innerHTML = "<p style='text-align:center; color:gray;'>No classes found. Add your first class!</p>";
+        return;
+      }
+
+ function getClassTimes(classData) {
+  // Case 1: Single time string "4:00 PM - 6:00 PM"
+  if (classData.time && classData.time.includes('-')) {
+    const parts = classData.time.split('-').map(t => t.trim());
+    return { start: parts[0], end: parts[1] };
+  }
+  
+  // Case 2: Separate startTime and endTime fields
+  if (classData.startTime && classData.endTime) {
+    return { start: classData.startTime, end: classData.endTime };
+  }
+  
+  // Case 3: Single time value (unlikely but handle it)
+  if (classData.time) {
+    return { start: classData.time, end: 'N/A' };
+  }
+  
+  // Default fallback
+  return { start: 'N/A', end: 'N/A' };
+}
+
+// Then update your display code
+classes.forEach(d => {
+  const div = document.createElement("div");
+  div.className = "class-item";
+  
+  // Get times using our helper
+  const { start, end } = getClassTimes(d);
+  
+  // Convert to 12-hour format
+  const start12h = to12Hour(start);
+  const end12h = to12Hour(end);
+
+        div.innerHTML = `
+          <div class="class-item-header">
+            <div class="class-item-title">
+              <h4>${d.name}</h4>
+            </div>
+          </div>
+          <div class="class-item-info">
+            <div class="info-item">
+              <span class="info-label">Days</span>
+              <span class="info-value">${d.days}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Time</span>
+              <span class="info-value">${start12h} - ${end12h}</span>
+            </div>
+            <div class="info-item info-item-advisor">
+              <span class="info-label">Advisor</span>
+              <div class="advisor-with-delete">
+                <span class="info-value">${d.instructor || 'N/A'}</span>
+                <button class="delete-btn" data-id="${d.id}">
+                  <span class="material-icons">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        classesList.appendChild(div);
+      });
+
+      // Delete button listeners
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const confirmDelete = confirm("Are you sure you want to delete this class?");
+          if (!confirmDelete) return;
+
+          const id = btn.dataset.id;
+          await deleteDoc(doc(db, "classes", id));
+          btn.closest(".class-item").remove();
+
+          const cached = localStorage.getItem("classes");
+          if (cached) {
+            const updated = JSON.parse(cached).filter(cls => cls.id !== id);
+            localStorage.setItem("classes", JSON.stringify(updated));
+          }
+
+          if (!classesList.children.length) {
+            classesList.innerHTML = "<p style='text-align:center; color:gray;'>No classes found. Add your first class!</p>";
+          }
+        });
+      });
+    };
+
+    const loadClasses = async () => {
+      const cached = localStorage.getItem("classes");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          displayClasses(parsed);
+        } catch (err) {
+          console.warn("Failed to parse cached classes:", err);
+        }
+      }
+
+      try {
+        const q = query(
+          collection(db, "classes"),
+          where("userId", "==", user.uid)
+        );
+
+        onSnapshot(
+          q,
+          (snap) => {
+            const classes = snap.docs.map(docSnap => ({
+              ...docSnap.data(),
+              id: docSnap.id
+            }));
+
+            displayClasses(classes);
+            localStorage.setItem("classes", JSON.stringify(classes));
+          },
+          (error) => {
+            console.error("Real-time listener error:", error);
+            classesList.innerHTML = `
+              <p style="color: red; text-align: center; padding: 20px;">
+                Connection error: ${error.message}
+              </p>
+            `;
+          }
+        );
+
+      } catch (error) {
+        console.error("Error loading classes:", error);
+        classesList.innerHTML = `
+          <p style="color: red; text-align: center; padding: 20px;">
+            Error loading classes: ${error.message}
+          </p>
+        `;
+      }
+    };
+
+ function to12Hour(t) {
+  if (!t || t === 'N/A') return 'N/A';
+  
+  // If already in 12-hour format (like "6 PM"), return as-is
+  if (t.includes('AM') || t.includes('PM')) {
+    return t.trim();
+  }
+  
+  try {
+    // Handle 24-hour format (like "16:00")
+    const [hours, minutes] = t.split(':').map(Number);
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = (minutes || 0).toString().padStart(2, '0');
+    
+    return `${displayHours}:${displayMinutes} ${ampm}`;
+  } catch (e) {
+    console.warn("Invalid time format:", t);
+    return t; // Return original if we can't convert
+  }
+}
+
+    loadClasses();
+  }
+
+  document.getElementById('addClassFab').addEventListener('click', () => {
+    window.location.href = 'add-class.html';
+  });
+
+
+
 
     /* ═══════════════════════════════════════════════════════════════ */
     /* CALENDAR INITIALIZATION: Set up month navigation listeners */
@@ -684,17 +862,11 @@ async function loadPendingTasks(user) {
 
 const tasksList = document.getElementById("tasksList");
 
-  onAuthStateChanged(auth, async (user) => {
+  function initializeTasksSection(user) {
     if (!user) {
       window.location.href = 'login.html';
       return;
     }
-
-    // Show loader, hide app - FIXED: Use correct ID 'loadingScreen'
-    const loadingScreen = document.getElementById('loadingScreen');
-    const appContainer = document.querySelector('.app-container');
-    if (loadingScreen) loadingScreen.style.display = 'flex';
-    if (appContainer) appContainer.style.display = 'none';
 
     const displayTasks = (tasks) => {
       tasksList.innerHTML = "";
@@ -705,7 +877,7 @@ const tasksList = document.getElementById("tasksList");
       }
 
       tasks.forEach(task => {
-        const dueDate = new Date(task.dueDate);
+        const dueDate = task.dueDate?.toDate ? task.dueDate.toDate() : new Date(task.dueDate);
         const options = {
           weekday: 'short',
           year: 'numeric',
@@ -796,15 +968,22 @@ const tasksList = document.getElementById("tasksList");
       orderBy("dueDate")
     );
 
-    
-      
-      if (appContainer) appContainer.style.display = 'block';
-  
+    onSnapshot(q, (snapshot) => {
+      const tasks = snapshot.docs.map(docSnap => ({
+        ...docSnap.data(),
+        id: docSnap.id
+      }));
+      displayTasks(tasks);
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }, (error) => {
+      console.error("Error loading tasks:", error);
+      tasksList.innerHTML = "<p style='text-align:center;color:red;'>Error loading tasks</p>";
+    });
 
     document.getElementById("addTaskFab").addEventListener("click", () => {
       window.location.href = "add-task.html";
     });
-  });
+  }
 
 
 
@@ -868,6 +1047,22 @@ const tasksList = document.getElementById("tasksList");
       return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
     }
 
+    // Parse a time string like "16:00" or "4:00 PM" into 24h parts
+    function parseTimeToParts(t) {
+      if (!t) return null;
+      const s = t.trim();
+      const m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+      if (!m) return null;
+      let h = parseInt(m[1], 10);
+      let min = m[2] ? parseInt(m[2], 10) : 0;
+      const ap = m[3] ? m[3].toUpperCase() : null;
+      if (ap) {
+        if (ap === 'PM' && h < 12) h += 12;
+        if (ap === 'AM' && h === 12) h = 0;
+      }
+      return { hours: h, minutes: min };
+    }
+
     /* ═══════════════════════════════════════════════════════════════ */
     /* SHOW SCHEDULE FOR DATE: Load classes for selected calendar date */
     /* ═══════════════════════════════════════════════════════════════ */
@@ -906,11 +1101,16 @@ async function showFor(dayNum, month, year, user) {
         if (classDays.includes(wd)) {
           found = true;
           
-          const [startTime, endTime] = c.time.split(' - ');
-          const [startHours, startMinutes] = startTime.split(':');
-          const [endHours, endMinutes] = endTime.split(':');
-
-          const timeRange = `${to12HourFormat(parseInt(startHours), parseInt(startMinutes))} – ${to12HourFormat(parseInt(endHours), parseInt(endMinutes))}`;
+          const timeStr = c.time || (c.startTime && c.endTime ? `${c.startTime} - ${c.endTime}` : '');
+          let timeRange = timeStr;
+          if (timeStr && timeStr.includes('-')) {
+            const [startTime, endTime] = timeStr.split('-').map(s => s.trim());
+            const sp = parseTimeToParts(startTime);
+            const ep = parseTimeToParts(endTime);
+            if (sp && ep) {
+              timeRange = `${to12HourFormat(sp.hours, sp.minutes)} – ${to12HourFormat(ep.hours, ep.minutes)}`;
+            }
+          }
 
           const it = document.createElement('div');
           it.className = 'schedule-item';
@@ -1030,7 +1230,7 @@ async function showFor(dayNum, month, year, user) {
 
 
 
- /* ------------------------------
+ /* -----------------------------
    MODERN DASHBOARD STATISTICS
 ------------------------------ */
 
@@ -1120,29 +1320,7 @@ async function loadStatistics(user) {
 }
 
 
-/* ------------------------------
-   TAB SWITCHING + LOAD DASHBOARD
------------------------------- */
-
-document.querySelectorAll('.tab-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const target = item.dataset.target;
-
-    // Hide all pages
-    document.querySelectorAll('.page-section')
-      .forEach(sec => sec.style.display = 'none');
-
-    // Show selected page
-    document.getElementById(target).style.display = 'block';
-
-    // When Dashboard is opened → Load statistics
-    if (target === 'dashboardSection') {
-      if (auth.currentUser) {
-        loadStatistics(auth.currentUser);
-      }
-    }
-  });
-});
+// Tab switching is handled by the injected tabsbar component.
 
     /* ═══════════════════════════════════════════════════════════════ */
     /* SHOW NOTIFICATION: Display temporary toast notification to user */
@@ -1286,9 +1464,10 @@ document.querySelectorAll('.tab-item').forEach(item => {
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- CHATBOT SCRIPT: Handle FAB interaction and message sending -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="alertBoxContainer" style="position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;"></div>
   <script src="../js/chatbot.js"></script>
   <script src="../js/script.js"></script>
 
 </body>
 
-</html
+</html>

@@ -1,0 +1,516 @@
+/* classes.css - Modern Class Card Design */
+
+/* ========== FULL CLASS CARD ========== */
+.full-class-card {
+  background: #000000;
+  border: 1px solid #000000;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 80px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .full-class-card {
+    margin: 1rem;
+    border-radius: 16px;
+  }
+}
+
+.full-class-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* ========== HEADER ========== */
+.full-class-card .card-header {
+  background: #000000;
+  padding: 0.9rem;
+  border-bottom: 1px solid #00000000;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .card-header {
+    padding: 1.2rem;
+    gap: 1rem;
+  }
+}
+
+.full-class-card .card-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .card-header h3 {
+    font-size: 1.3rem;
+  }
+}
+
+.full-class-card .card-header .material-icons {
+  color: #fff;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .card-header .material-icons {
+    font-size: 1.5rem;
+  }
+}
+
+/* ========== CLASS LIST AREA ========== */
+.full-class-card .class-list {
+  background: #000000;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .class-list {
+    padding: 1rem;
+    gap: 1rem;
+  }
+}
+
+/* Scrollbar */
+.full-class-card .class-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.full-class-card .class-list::-webkit-scrollbar-track {
+  background: #2f2e2e;
+  border-radius: 4px;
+}
+
+.full-class-card .class-list::-webkit-scrollbar-thumb {
+  background: #2d3748;
+  border-radius: 4px;
+}
+
+.full-class-card .class-list::-webkit-scrollbar-thumb:hover {
+  background: #242424;
+}
+
+/* ========== MODERN CLASS ITEM CARD ========== */
+.full-class-card .class-item {
+  background: linear-gradient(135deg, rgb(42, 43, 45) 0%, rgb(35, 36, 38) 100%);
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .class-item {
+    padding: 1.25rem;
+    gap: 1rem;
+    border-radius: 14px;
+  }
+}
+
+/* Gradient accent on left side */
+.full-class-card .class-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary) 0%, #38c0ff 100%);
+  border-radius: 12px 0 0 12px;
+}
+
+.full-class-card .class-item:hover {
+  background: linear-gradient(135deg, rgb(50, 52, 55) 0%, rgb(42, 44, 47) 100%);
+  transform: translateX(4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(56, 192, 255, 0.1);
+}
+
+/* ========== CLASS HEADER ROW (Title Only) ========== */
+.full-class-card .class-item-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .class-item-header {
+    gap: 1rem;
+  }
+}
+
+.full-class-card .class-item-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.full-class-card .class-item-title h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .class-item-title h4 {
+    font-size: 1.2rem;
+  }
+}
+
+/* ========== CLASS INFO GRID ========== */
+.full-class-card .class-item-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .class-item-info {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Info item: Days, Time, Advisor */
+.full-class-card .info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.full-class-card .info-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #38c0ff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .info-label {
+    font-size: 0.8rem;
+  }
+}
+
+.full-class-card .info-value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .info-value {
+    font-size: 1rem;
+  }
+}
+
+.full-class-card .advisor-with-delete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ========== CLASS FOOTER (Delete Button) ========== */
+.full-class-card .class-item-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-left: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .class-item-footer {
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+  }
+}
+
+/* ========== DELETE BUTTON ========== */
+.full-class-card .delete-btn {
+  background: #4a0000;
+  color: #ffb5b5;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .delete-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+}
+
+.full-class-card .delete-btn:hover {
+  background: #8b1010;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.2);
+}
+
+.full-class-card .delete-btn .material-icons {
+  font-size: 1rem;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .delete-btn .material-icons {
+    font-size: 1.1rem;
+  }
+}
+
+/* ========== EMPTY STATE ========== */
+.full-class-card .empty-classes {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #a0aec0;
+  background: #0b0b0b;
+  font-style: italic;
+}
+
+@media (min-width: 768px) {
+  .full-class-card .empty-classes {
+    padding: 3rem 1rem;
+  }
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== FAB HEADER BUTTON ========== */
+.fab-header {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: #38c0ff;
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .fab-header {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+    border-radius: 12px;
+  }
+}
+
+.fab-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(56, 192, 255, 0.3);
+  background: #2ba8e8;
+}
+
+.fab-header:active {
+  transform: translateY(0);
+}
+
+/* ========== CLASS LAYOUT (for home section) ========== */
+.class-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .class-layout {
+    gap: 1rem;
+  }
+}
+
+.class-layout .class-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 0.85rem;
+  width: 110px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .class-layout .class-time {
+    font-size: 0.95rem;
+    width: 130px;
+  }
+}
+
+.class-layout .class-time .day {
+  color: white;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  .class-layout .class-time .day {
+    margin-bottom: 0.2rem;
+    font-size: 1rem;
+  }
+}
+
+.class-layout .class-time .time {
+  font-size: 0.8rem;
+  color: var(--primary);
+}
+
+@media (min-width: 768px) {
+  .class-layout .class-time .time {
+    font-size: 0.9rem;
+  }
+}
+
+.class-layout .class-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.class-layout .class-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .class-layout .class-title {
+    font-size: 1.1rem;
+  }
+}
+
+.class-layout .instructor {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .class-layout .instructor {
+    font-size: 0.95rem;
+  }
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 480px) {
+  .full-class-card {
+    margin: 0.25rem;
+    border-radius: 10px;
+  }
+
+  .full-class-card .card-header {
+    padding: 0.75rem;
+  }
+
+  .full-class-card .class-item {
+    padding: 0.9rem;
+    gap: 0.6rem;
+  }
+
+  .full-class-card .class-item-info {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .class-layout {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .class-layout .class-time {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .full-class-card {
+    margin: 0.75rem;
+  }
+
+  .full-class-card .class-item {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .full-class-card {
+    margin: 1rem;
+  }
+}

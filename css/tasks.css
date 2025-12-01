@@ -1,308 +1,398 @@
-/* ------------------------------
-   FULL TASK CARD (CLEAN VERSION)
---------------------------------*/
+/* tasks.css - Responsive Full Task Card Styling */
 
-
+/* ========== FULL TASK CARD ========== */
 .full-task-card {
-    background: #020202;
-    border: 1px solid #000000;
+  background: #020202;
+  border: 1px solid #000000;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 80px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .full-task-card {
+    margin: 1rem;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    backdrop-filter: blur(10px);
-
-    position: sticky;
-    top: 0;
-    z-index: 10;
-
-    margin: 0 20px;            /* No top spacing */
-    display: flex;
-    flex-direction: column;
-
-    max-height: calc(100vh - 20px);
-    overflow: hidden;          /* Clean scroll inside only */
-    transition: all 0.3s ease;
+  }
 }
 
 .full-task-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
-/* ------------------------------
-   HEADER
---------------------------------*/
-
+/* ========== HEADER ========== */
 .full-task-card .card-header {
-    background: #000000;
-    padding: 20px 24px;
-    border-bottom: 1px solid #00000000;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
+  background: #000000;
+  padding: 0.9rem;
+  border-bottom: 1px solid #00000000;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .card-header {
+    padding: 1.2rem;
+    gap: 1rem;
+  }
 }
 
 .full-task-card .card-header h3 {
-    margin: 0;
-    color: #fff;
-    font-size: 1.5rem;
-    font-weight: 600;
+  margin: 0;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .card-header h3 {
+    font-size: 1.3rem;
+  }
 }
 
 .full-task-card .card-header .material-icons {
-    color: #fff;
-    font-size: 1.5rem;
-   
+  color: #fff;
+  font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
-/* ------------------------------
-   TASK LIST AREA
---------------------------------*/
+@media (min-width: 768px) {
+  .full-task-card .card-header .material-icons {
+    font-size: 1.5rem;
+  }
+}
 
+/* ========== TASK LIST AREA ========== */
 .full-task-card .task-list {
-    background: #050505;
-    flex: 1;
-    overflow-y: auto;
-
-    padding: 0;
+  background: #050505;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
 }
 
 /* Scrollbar */
 .full-task-card .task-list::-webkit-scrollbar {
-    width: 8px;
+  width: 6px;
 }
 
 .full-task-card .task-list::-webkit-scrollbar-track {
-    background: #1f1e1e;
-    border-radius: 4px;
+  background: #1f1e1e;
+  border-radius: 4px;
 }
 
 .full-task-card .task-list::-webkit-scrollbar-thumb {
-    background: #2d3748;
-    border-radius: 4px;
+  background: #2d3748;
+  border-radius: 4px;
 }
 
 .full-task-card .task-list::-webkit-scrollbar-thumb:hover {
-    background: #060606;
+  background: #060606;
 }
 
-/* ------------------------------
-   TASK ITEM
---------------------------------*/
-
+/* ========== TASK ITEM ========== */
 .full-task-card .task-item {
-    background: rgb(42, 43, 45);
-    padding: 20px 24px;
-    border-bottom: 1px solid #171717;
+  background: rgb(42, 43, 45);
+  padding: 0.9rem;
+  border-bottom: 1px solid #171717;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  transition: 0.2s ease;
+  animation: slideIn 0.3s ease-out;
+  border-left: 4px solid var(--primary);
+}
 
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    align-items: flex-start;
-
-    transition: 0.2s ease;
-    animation: slideIn 0.3s ease-out;
+@media (min-width: 768px) {
+  .full-task-card .task-item {
+    padding: 1.1rem;
+    gap: 1rem;
+  }
 }
 
 .full-task-card .task-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .full-task-card .task-item:hover {
-    background: #5a6578;
-    transform: translateX(4px);
+  background: #5a6578;
+  transform: translateX(3px);
 }
 
 .full-task-card .task-item.done {
-    background: #2d5a2d;
-    opacity: 0.85;
+  background: #2d5a2d;
+  opacity: 0.85;
 }
 
 .full-task-card .task-item.done h4 {
-    color: #a0aec0;
-    text-decoration: line-through;
+  color: #a0aec0;
+  text-decoration: line-through;
 }
 
-/* ------------------------------
-   TASK TEXT INFO
---------------------------------*/
-
+/* ========== TASK TEXT INFO ========== */
 .full-task-card .task-info {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .full-task-card .task-info h4 {
-    margin: 0 0 8px;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #fff;
+  margin: 0 0 0.4rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .task-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .full-task-card .task-info p {
-    margin: 0 0 12px;
-    color: #e2e8f0;
+  margin: 0 0 0.4rem 0;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .task-info p {
     font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 /* Deadline badge */
 .full-task-card .deadline {
-    display: inline-block;
-    background: #718096;
-    color: #fff;
-    padding: 4px 12px;
-    border-radius: 20px;
+  display: inline-block;
+  background: #718096;
+  color: #fff;
+  padding: 0.3rem 0.7rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .deadline {
     font-size: 0.85rem;
-    font-weight: 500;
+    padding: 0.35rem 0.85rem;
+  }
 }
 
 /* Task type tag */
 .full-task-card .task-info .task-type {
-    display: inline-block;
-    padding: 4px 12px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 8px;
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.5rem;
 }
 
-/* ------------------------------
-   ACTION BUTTONS
---------------------------------*/
+@media (min-width: 768px) {
+  .full-task-card .task-info .task-type {
+    font-size: 0.9rem;
+    padding: 0.35rem 0.85rem;
+  }
+}
 
+/* ========== ACTION BUTTONS ========== */
 .full-task-card .task-actions {
-    display: flex;
-    gap: 8px;
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .task-actions {
+    gap: 0.6rem;
+  }
 }
 
 .full-task-card .done-btn {
-    background: #48bb78;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
+  background: #48bb78;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .done-btn {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
     border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s ease;
+  }
 }
 
 .full-task-card .done-btn:hover {
-    background: #38a169;
+  background: #38a169;
 }
 
 .full-task-card .done-btn:disabled {
-    background: #a0aec0;
-    cursor: not-allowed;
+  background: #a0aec0;
+  cursor: not-allowed;
 }
 
 .full-task-card .delete-btn {
-    background: #4a0000;
-    color: #ffb5b5;
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 10px;
+  background: #4a0000;
+  color: #ffb5b5;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+  flex-shrink: 0;
+}
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    cursor: pointer;
-    transition: 0.2s ease;
+@media (min-width: 768px) {
+  .full-task-card .delete-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
 }
 
 .full-task-card .delete-btn:hover {
-    background: #8b1010;
-    transform: scale(1.08);
+  background: #8b1010;
+  transform: scale(1.08);
 }
 
-/* ------------------------------
-   EMPTY STATE
---------------------------------*/
+.full-task-card .delete-btn .material-icons {
+  font-size: 1rem;
+}
 
+@media (min-width: 768px) {
+  .full-task-card .delete-btn .material-icons {
+    font-size: 1.1rem;
+  }
+}
+
+/* ========== EMPTY STATE ========== */
 .full-task-card .empty-tasks {
-    text-align: center;
-    padding: 60px 20px;
-    color: #a0aec0;
-    background: #0b0b0b;
-    font-style: italic;
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #a0aec0;
+  background: #0b0b0b;
+  font-style: italic;
 }
 
-/* ------------------------------
-   ANIMATIONS
---------------------------------*/
+@media (min-width: 768px) {
+  .full-task-card .empty-tasks {
+    padding: 3rem 1rem;
+  }
+}
 
+/* ========== ANIMATIONS ========== */
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* ------------------------------
-   RESPONSIVE DESIGN
---------------------------------*/
-
-@media (max-width: 768px) {
-    .full-task-card {
-        margin: 0 10px;
-        border-radius: 12px;
-    }
-
-    .task-item {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .task-actions {
-        justify-content: flex-end;
-    }
-}
-
-@media (max-width: 480px) {
-    .full-task-card {
-        margin: 0 8px;
-        border-radius: 10px;
-    }
-
-    .task-item {
-        padding: 14px 16px;
-    }
-}
-
-/* Header layout */
-.card-header {
-  display: flex;
-  justify-content: space-between; /* Title left, button right */
-  align-items: center;
-  padding: 16px 20px;
-}
-
-/* New header FAB style */
+/* ========== FAB HEADER BUTTON ========== */
 .fab-header {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #38c0ff;
   color: white;
-  font-size: 24px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   transition: 0.15s ease;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .fab-header {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+  }
 }
 
 .fab-header:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 480px) {
+  .full-task-card {
+    margin: 0.25rem;
+    border-radius: 10px;
+  }
+
+  .full-task-card .card-header {
+    padding: 0.75rem;
+  }
+
+  .full-task-card .task-item {
+    padding: 0.8rem;
+    flex-direction: column;
+  }
+
+  .full-task-card .task-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .full-task-card {
+    margin: 0.75rem;
+  }
+
+  .full-task-card .task-item {
+    padding: 0.95rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .full-task-card {
+    margin: 1rem;
+  }
 }

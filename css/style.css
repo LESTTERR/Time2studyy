@@ -1,4 +1,4 @@
-/* style.css */
+/* style.css - Responsive PWA Design */
 
 @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
 @import url("https://fonts.googleapis.com/css?family=Inter:900,800,400,500,700");
@@ -9,51 +9,16 @@
   --accent: #ff7675;
   --background: rgb(25, 25, 33);
   --card-bg: rgb(42, 43, 45)!important;
-  --text: #e6eef8; /* light body text for contrast */
-  --date-text: #e6eef8; /* use for calendar dates */
-  --date-muted: rgba(230,238,248,0.45); /* other-month dates */
+  --text: #e6eef8;
+  --date-text: #e6eef8;
+  --date-muted: rgba(230,238,248,0.45);
   --glass: rgba(255, 255, 255, 0.15);
   --shadow: 0 8px 32px rgba(15, 15, 16, 0.195)!important;
   --border: 1px solid rgba(17, 13, 13, 0.505)!important;
   --sky-blue: #79c2ff;
   --dark-blue: rgb(228 246 255);
+  --accent-color: #3df2ff;
 }
-
-/* ========== Base Reset ========== */
-
-/* GENERAL layout for all content-sections */
-.content-section {
-  display: none;
-}
-
-/* HOME section keeps natural layout */
-#homeSection {
-  display: none;
-  position: relative;     /* normal flow */
-  width: 100%;
-  height: auto;           /* don't force height */
-  overflow-y: visible;    /* allow calendar layout */
-}
-
-/* Other sections become full-screen pages */
-#tasksSection,
-#classesSection,
-#profileSection {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: calc(100vh - 60px); /* minus tab bar */
-  overflow-y: auto;
-}
-
-/* Only the active section becomes visible */
-.content-section.active {
-  display: block;
-}
-
-
-
 
 * {
   -webkit-font-smoothing: antialiased;
@@ -62,15 +27,10 @@
 
 html, body {
   margin: 0;
+  padding: 0;
   height: 100%;
+  width: 100%;
 }
-
-button:focus-visible {
-  outline: 2px solid #4a90e2 !important;
-  outline: -webkit-focus-ring-color auto 5px !important;
-}
-
-a { text-decoration: none; }
 
 html {
   min-height: 100%;
@@ -79,60 +39,39 @@ html {
   background-repeat: no-repeat;
   background-size: cover;
 }
-/* Tab loading indicator */
-.tab-loading {
-  text-align: center;
-  padding: 1rem;
-  color: #666;
-  font-style: italic;
-}
 
 body {
   font-family: 'M PLUS Rounded 1c', sans-serif;
-
-
   min-height: 100%;
+  overflow-x: hidden;
 }
 
+a { text-decoration: none; }
+
+button:focus-visible {
+  outline: 2px solid #4a90e2 !important;
+}
+
+/* ========== App Container ========== */
 .app-container {
-  max-width: 1250px;
-  margin: 0 auto;      /* Center horizontally */
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
   height: auto;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  display: block;
+  overflow: visible;
   padding: 0;
   padding-bottom: 80px;
   position: relative;
 }
 
+/* ========== Content Sections ========== */
 .content-section {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0px;
   display: none;
-}
-
-.floating-box {
   width: 100%;
-  margin: 0;
-  padding: 15px; /* Inner padding */
-  background: #fff; /* Example background */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Optional shadow */
-  
-}
-
-.content-section .floating-box {
-  margin-left: -20px;
-  margin-right: -20px;
-  width: calc(100% + 40px);
-}
-
-/* OPTION 2: For direct children of app-container */
-.app-container > .floating-box {
-  position: absolute;
-  left: 0;
-  right: 0;
+  height: auto;
+  overflow-y: auto;
+  padding: 1rem;
 }
 
 .content-section.active {
@@ -140,46 +79,113 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
-/* Add if using fadeIn animation */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ========== Main Page ========== */
+.main-page {
+  width: 100%;
+  padding: 0.5rem;
+  display: block;
+}
+
+/* ========== Responsive Wrapper ========== */
+.responsive-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.calendar-card,
+.schedule-task-wrapper {
+  flex: 1;
+  min-width: 280px;
+  width: 100%;
+}
+
+.schedule-task-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Desktop: Side by side layout */
+@media (min-width: 1024px) {
+  .responsive-wrapper {
+    flex-wrap: nowrap;
+  }
+
+  .calendar-card {
+    flex: 0 1 45%;
+    min-width: 350px;
+  }
+
+  .schedule-task-wrapper {
+    flex: 0 1 55%;
+    min-width: 350px;
+  }
+}
+
+/* Tablet: Adjusted layout */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .responsive-wrapper {
+    flex-wrap: wrap;
+  }
+
+  .calendar-card,
+  .schedule-task-wrapper {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 300px;
+  }
+}
+
+/* Mobile: Stack vertically */
+@media (max-width: 767px) {
+  .responsive-wrapper {
+    flex-direction: column;
+  }
+
+  .calendar-card,
+  .schedule-task-wrapper {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+}
+
 /* ========== Calendar ========== */
-
-
 .calendar-card {
-  background:var(--card-bg);
-  border-radius: 24px;
-  padding: 1.5rem;
-  margin-top: 30px;
-  margin-bottom: 1.5rem;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
   box-shadow: var(--shadow);
   border: var(--border);
   display: flex;
-  
   flex-direction: column;
   align-items: center;
   text-align: center;
   overflow: hidden;
   transition: all 0.3s ease;
-  max-height: 500px; /* Increased max-height to accommodate full month */
-}
-#monthYear {
-  font-weight: 900;  /* Bold */
-  font-size: 2rem;
-  color: #ffffff;    /* matching your primary blue */
-  margin-bottom: 1rem;
 }
 
-.calendar-card.expanded .dates-grid {
-  max-height: none; /* Allow full month of dates to be displayed */
+#monthYear {
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
+  margin-top: 0;
+}
+
+@media (min-width: 768px) {
+  #monthYear {
+    font-size: 2rem;
+  }
 }
 
 .calendar-header {
@@ -187,7 +193,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 #calendarGrid {
@@ -198,42 +204,58 @@ body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   width: 100%;
+  gap: 0.25rem;
 }
 
 .weekdays span {
   font-weight: bold;
-  padding: 0.8rem 0;
+  padding: 0.5rem 0;
   text-align: center;
   color: var(--date-text);
+  font-size: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .weekdays span {
+    padding: 0.8rem 0;
+    font-size: 0.9rem;
+  }
 }
 
 .dates-grid {
   transition: max-height 0.3s ease;
-  max-height: 400px; /* Adjusted for a full month */
+  max-height: 400px;
   overflow-y: auto;
 }
 
 .dates-grid span {
-  padding: 0.8rem 0;
-  border-radius: 8px;
-  margin: 0.1rem;
+  padding: 0.5rem 0;
+  border-radius: 6px;
+  margin: 0.05rem;
   cursor: pointer;
   text-align: center;
-  color: var(--date-text); /* ensure dates are light on dark bg */
+  color: var(--date-text);
   transition: background-color 0.15s, color 0.15s, transform 0.12s;
   user-select: none;
-  min-height: 40px;
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.85rem;
 }
 
-/* faded dates from other months (if you render them) */
+@media (min-width: 768px) {
+  .dates-grid span {
+    padding: 0.8rem 0;
+    min-height: 40px;
+    font-size: 1rem;
+  }
+}
+
 .dates-grid span.other-month {
   color: var(--date-muted);
 }
 
-/* highlight today's date */
 .dates-grid span.today {
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(79,155,255,0.06);
@@ -241,23 +263,164 @@ body {
   font-weight: 700;
 }
 
-/* selected date (single selection) */
 .selected-date,
 .dates-grid span.selected {
   background: var(--primary);
   color: #ffffff;
   box-shadow: 0 6px 18px rgba(38,99,235,0.18);
   border-radius: 50%;
-  padding: 6px;
+  padding: 4px;
 }
 
-/* hover effect */
+@media (min-width: 768px) {
+  .selected-date,
+  .dates-grid span.selected {
+    padding: 6px;
+  }
+}
+
 .dates-grid span:hover {
-  background: rgba(255,255,255,0.03);
+  background: var(--primary);
   color: #ffffff;
   transform: translateY(-2px);
 }
 
+.nav-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3d8fcd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.nav-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-button .material-icons {
+  font-size: 20px;
+}
+
+@media (min-width: 768px) {
+  .nav-button .material-icons {
+    font-size: 24px;
+  }
+}
+
+/* ========== Schedule & Task Cards ========== */
+.schedule-card,
+.task-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: var(--shadow);
+  border: var(--border);
+  transition: transform 0.3s ease;
+}
+
+.schedule-card:hover,
+.task-card:hover {
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .card-header h3 {
+    font-size: 1.25rem;
+  }
+}
+
+.card-header .material-icons {
+  font-size: 1.3rem;
+  color: var(--primary);
+}
+
+.schedule-list,
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.schedule-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  .schedule-item {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.schedule-item .time {
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 100px;
+  font-size: 0.85rem;
+}
+
+@media (min-width: 768px) {
+  .schedule-item .time {
+    min-width: 120px;
+    font-size: 0.9rem;
+  }
+}
+
+.schedule-item .details h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .schedule-item .details h4 {
+    font-size: 1rem;
+  }
+}
+
+.schedule-item .details p {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (min-width: 768px) {
+  .schedule-item .details p {
+    font-size: 0.85rem;
+  }
+}
 
 /* ========== Tab Bar ========== */
 .tab-bar {
@@ -265,7 +428,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 70px;
+  height: 60px;
   background: var(--card-bg);
   display: flex;
   justify-content: space-around;
@@ -273,21 +436,33 @@ body {
   backdrop-filter: blur(10px);
   border-top: var(--border);
   box-shadow: 0 -8px 32px rgba(31, 38, 135, 0.05);
-  z-index: 10000; /* Ensure it stays above other content but below FAB if needed */
+  z-index: 10000;
 }
 
-/* Tab Items */
+@media (min-width: 768px) {
+  .tab-bar {
+    height: 70px;
+  }
+}
+
 .tab-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.8rem 0;
+  padding: 0.5rem 0;
   background: none;
   border: none;
   color: #ffffff;
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .tab-item {
+    padding: 0.8rem 0;
+  }
 }
 
 .tab-item.active {
@@ -297,377 +472,106 @@ body {
 .tab-item.active::after {
   content: '';
   position: absolute;
-  bottom: 8px;
-  width: 24px;
+  bottom: 6px;
+  width: 20px;
   height: 2px;
   background: var(--primary);
   border-radius: 1px;
 }
 
+@media (min-width: 768px) {
+  .tab-item.active::after {
+    bottom: 8px;
+    width: 24px;
+  }
+}
+
 .tab-item .material-icons {
-  font-size: 1.8rem;
-  margin-bottom: 4px;
+  font-size: 1.4rem;
+  margin-bottom: 2px;
   transition: transform 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .tab-item .material-icons {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+  }
 }
 
 .tab-item.active .material-icons {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
 }
 
-/* ========== Responsive Adjustments ========== */
-@media (max-width: 480px) {
-  .tab-bar {
-    height: 60px;
-    padding: 0 5px;
-  }
-
-  .tab-item {
-    padding: 0.5rem 0;
-  }
-
-  .tab-item .material-icons {
-    font-size: 1.5rem;
-    margin-bottom: 2px;
-  }
-
-  .tab-item.active::after {
-    width: 20px;
-    bottom: 6px;
+@media (min-width: 768px) {
+  .tab-item.active .material-icons {
+    transform: translateY(-5px);
   }
 }
 
-@media (min-width: 481px) and (max-width: 1024px) {
-  .tab-bar {
-    height: 65px;
-  }
+.tab-label {
+  font-size: 0.65rem;
+  display: none;
+}
 
-  .tab-item .material-icons {
-    font-size: 1.6rem;
-  }
-
-  .tab-item.active::after {
-    width: 22px;
-    bottom: 7px;
+@media (min-width: 768px) {
+  .tab-label {
+    display: inline;
+    font-size: 0.75rem;
   }
 }
 
-
-.swipe-container {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
+/* ========== Tab Loading ========== */
+.tab-loading {
+  text-align: center;
+  padding: 1rem;
+  color: #666;
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
-.swipe-wrapper {
-  display: flex;
-  width: 100%;  
-  transition: transform 0.3s ease;
-}
-
-.swipe-page {
-  width: 100%; 
-  flex-shrink: 0;
-}
-
-.dashboard-page {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 40px;
-  box-sizing: border-box;
-  width: 100%; 
-}
-
-.page-indicator {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 10;
-}
-
-   
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: gray;
-  opacity: 0.5;
-  transition: background-color 0.3s ease, opacity 0.3s ease;
-}
-
-.dot.active {
-  background-color: white;
-  opacity: 1;
-}
-
-.dashboard-card {
-  background: var(--card-bg);
-  border-radius: 24px;
-  padding: 10px;
-  margin-top: 0;
-  box-shadow: var(--shadow);
-  border: var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  max-height: 500px;
-  width: 100%;
-  max-width: 900px; /* optional: limit on desktop */
-  margin-left: auto;
-  margin-right: auto;
-   transform: scale(0.8);  
-    transform-origin: top center;
-}
-
-.chart-container {
-  width: 100%; /* no overflow */
-  height: 400px;
-  padding: 0.5rem;
-  position: relative;
-}
-
-#myBarChart {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .dashboard-card {
-    padding: 1rem;
-    margin: 0.5rem auto;
-    border-radius: 20px;
-  }
-
-  .chart-container {
-    height: 350px;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-card {
-    border-radius: 16px;
-    max-height: 450px;
-  }
-
-  .chart-container {
-    height: 250px;
-  }
-}
-
-
-@media (max-width: 600px) {
-  .app-container {
-    margin-left: 10px;
-    margin-right: 10px;
-  }
-}
-
-
-@keyframes loadbar {
-  0% { width: 0%; }
-  50% { width: 80%; }
-  100% { width: 0%; }
-}
-
-  .calendar-dot {
-    width: 6px;
-    height: 6px;
-    background-color: red;
-    border-radius: 50%;
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-
-  /* Floating Chatbot Button */
-#chatbot-fab {
-    display: none;
-    position: fixed;
-    bottom: 100px;
-    right: 30px;
-    z-index: 9999;
-    cursor: pointer;
-    width: 75px;
-    height: 75px;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    backdrop-filter: blur(5px);
-}
-
-#chatbot-fab .material-icons {
-    color: #27c2ed;
-    font-size: 40px;
-}
-
-/* Responsive Floating Button */
-@media (max-width: 480px) {
-    #chatbot-fab {
-        width: 60px;
-        height: 60px;
-        bottom: 80px;
-        right: 20px;
-    }
-}
-
-@media (min-width: 481px) and (max-width: 1024px) {
-    #chatbot-fab {
-        width: 70px;
-        height: 70px;
-        bottom: 90px;
-        right: 25px;
-    }
-}
-
-/* Chatbot Window */
-#chatbot-window {
-    display: none;
-    position: fixed;
-    bottom: 104px;
-    right: 32px;
-    width: 340px;
-    max-width: 95vw;
-    background: #111111;
-    border-radius: 20px;
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Header */
-#chatbot-header {
-    background: #237ecd;
-    color: white;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-weight: 600;
-}
-
-#chatbot-close {
-    cursor: pointer;
-    font-size: 22px;
-}
-
-/* Chat Area */
-#messages {
-    padding: 16px;
-    height: 260px;
-    overflow-y: auto;
-    background: #0e0e0e;
-    font-size: 0.98rem;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* Incoming Message (bot) – left side */
-.bot-message {
-    color: white;
-    padding: 10px 14px;
-    max-width: 80%;
-    align-self: flex-start;
-    line-height: 1.4;
-    border: 2px solid #444; /* circle-like border */
-    border-radius: 18px;     /* rounded circle shape */
-    background: transparent; /* no filled color */
-}
-
-/* Outgoing Message (user) – right side */
-.user-message {
-    color: white;
-    padding: 10px 14px;
-    max-width: 80%;
-    align-self: flex-end; 
-    line-height: 1.4;
-    border: 2px solid #1e88e5; /* blue border for your msg */
-    border-radius: 18px;       /* rounded circle shape */
-    background: transparent;   /* no fill */
-}
-
-
-/* Input Section */
-#chatbot-input-section {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    background: #111111;
-    border-top: 1px solid #222;
-}
-
-#userInput {
-    flex: 1;
-    padding: 10px 14px;
-    border-radius: 18px;
-    background: #1d1d1d;
-    color: white;
-    border: 1px solid #333;
-    outline: none;
-    font-size: 1rem;
-}
-
-#userInput::placeholder {
-    color: #777;
-}
-
-#chatbot-send {
-    margin-left: 10px;
-    background: #1e88e5;
-    border: none;
-    border-radius: 50%;
-    width: 42px;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-#chatbot-send .material-icons {
-    color: white;
-    font-size: 24px;
-}
-
-
-/* DASHBOARD GRID */
+/* ========== Dashboard Grid ========== */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 18px;
-  padding: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
 }
 
-/* CIRCLE CARDS */
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .circle-card {
   background: rgba(255, 255, 255, 0.07);
-  border-radius: 20px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 1.5rem;
   text-align: center;
   backdrop-filter: blur(10px);
   box-shadow: 0 0 15px rgba(0,255,255,0.1);
 }
 
-/* Circular progress container */
+@media (min-width: 768px) {
+  .circle-card {
+    padding: 2rem;
+  }
+}
+
 .circle-progress {
-  width: 110px;
-  height: 110px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  margin: 0 auto 10px auto;
+  margin: 0 auto 1rem auto;
   position: relative;
   display: flex;
   align-items: center;
@@ -675,44 +579,579 @@ body {
   background: conic-gradient(var(--accent-color) 0deg, rgba(255,255,255,0.2) 0deg);
 }
 
+@media (min-width: 768px) {
+  .circle-progress {
+    width: 120px;
+    height: 120px;
+  }
+}
+
 .circle-value {
   position: absolute;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: white;
+}
+
+@media (min-width: 768px) {
+  .circle-value {
+    font-size: 2.1rem;
+  }
 }
 
 .circle-label {
   color: white;
   font-size: 0.9rem;
-  margin-top: 4px;
+  margin-top: 0.5rem;
 }
 
-/* STAT CARDS */
+@media (min-width: 768px) {
+  .circle-label {
+    font-size: 1.15rem;
+    margin-top: 0.75rem;
+  }
+}
+
 .stat-card {
   background: rgba(255, 255, 255, 0.06);
-  padding: 20px;
-  border-radius: 16px;
+  padding: 1.25rem;
+  border-radius: 12px;
   backdrop-filter: blur(10px);
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .stat-card {
+    padding: 1.5rem;
+  }
 }
 
 .stat-card h3 {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: white;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .stat-card h3 {
+    font-size: 1rem;
+  }
 }
 
 .stat-card span {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent-color);
 }
 
-/* Accent Color (Neon Aqua) */
-:root {
-  --accent-color: #3df2ff;
+@media (min-width: 768px) {
+  .stat-card span {
+    font-size: 1.8rem;
+  }
+}
+
+/* ========== Full Task Card ========== */
+.full-task-card,
+.full-class-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  margin: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 100px);
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .full-task-card,
+  .full-class-card {
+    margin: 1rem;
+    border-radius: 16px;
+  }
+}
+
+.full-task-card .card-header,
+.full-class-card .card-header {
+  background: #000000;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .full-task-card .card-header,
+  .full-class-card .card-header {
+    padding: 1.25rem;
+  }
+}
+
+.full-task-card .task-list,
+.full-class-card .class-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.task-item,
+.class-item {
+  background: rgb(42, 43, 45);
+  padding: 1rem;
+  border-bottom: 1px solid #171717;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: 0.2s ease;
+  border-left: 4px solid var(--primary);
+}
+
+@media (min-width: 768px) {
+  .task-item,
+  .class-item {
+    padding: 1.25rem;
+  }
+}
+
+.task-item:last-child,
+.class-item:last-child {
+  border-bottom: none;
+}
+
+.task-item:hover,
+.class-item:hover {
+  background: #5a6578;
+  transform: translateX(4px);
+}
+
+.task-item.done {
+  background: #2d5a2d;
+  opacity: 0.85;
+}
+
+.task-item.done h4 {
+  color: #a0aec0;
+  text-decoration: line-through;
+}
+
+.task-info,
+.class-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-info h4,
+.class-info h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .task-info h4,
+  .class-info h4 {
+    font-size: 1.1rem;
+  }
+}
+
+.task-info p,
+.class-info p {
+  margin: 0 0 0.5rem 0;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+@media (min-width: 768px) {
+  .task-info p,
+  .class-info p {
+    font-size: 0.95rem;
+  }
+}
+
+.deadline {
+  display: inline-block;
+  background: #718096;
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .deadline {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.85rem;
+  }
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.done-btn,
+.delete-btn {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 0.85rem;
+}
+
+@media (min-width: 768px) {
+  .done-btn,
+  .delete-btn {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.9rem;
+  }
+}
+
+.done-btn {
+  background: #48bb78;
+  color: #fff;
+}
+
+.done-btn:hover {
+  background: #38a169;
+}
+
+.done-btn:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+.delete-btn {
+  background: #4a0000;
+  color: #ffb5b5;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .delete-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.delete-btn:hover {
+  background: #8b1010;
+  transform: scale(1.08);
+}
+
+.delete-btn .material-icons {
+  font-size: 1.2rem;
+}
+
+/* ========== Chatbot FAB ========== */
+#chatbot-fab {
+  display: none;
+  position: fixed;
+  bottom: 75px;
+  right: 20px;
+  z-index: 9999;
+  cursor: pointer;
+  width: 60px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  #chatbot-fab {
+    width: 75px;
+    height: 75px;
+    bottom: 90px;
+    right: 30px;
+  }
+}
+
+#chatbot-fab:hover {
+  background: rgba(0, 0, 0, 0.6);
+  transform: scale(1.1);
+}
+
+#chatbot-fab .material-icons {
+  color: #27c2ed;
+  font-size: 32px;
+}
+
+@media (min-width: 768px) {
+  #chatbot-fab .material-icons {
+    font-size: 40px;
+  }
+}
+
+#chatbot-window {
+  display: none;
+  position: fixed;
+  bottom: 75px;
+  right: 20px;
+  width: calc(100vw - 40px);
+  max-width: 380px;
+  background: #111111;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  z-index: 10000;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+@media (min-width: 768px) {
+  #chatbot-window {
+    width: 380px;
+    bottom: 100px;
+    right: 40px;
+    border-radius: 20px;
+  }
+}
+
+#chatbot-header {
+  background: #237ecd;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  #chatbot-header {
+    padding: 1.2rem;
+    font-size: 1.1rem;
+  }
+}
+
+#chatbot-close {
+  cursor: pointer;
+  font-size: 20px;
+}
+
+#messages {
+  padding: 1rem;
+  height: 250px;
+  overflow-y: auto;
+  background: #0e0e0e;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  #messages {
+    padding: 1.2rem;
+    height: 300px;
+    font-size: 0.98rem;
+    gap: 1rem;
+  }
+}
+
+.bot-message,
+.user-message {
+  padding: 0.75rem 1rem;
+  max-width: 85%;
+  line-height: 1.4;
+  border-radius: 16px;
+  word-wrap: break-word;
+}
+
+.bot-message {
+  color: white;
+  align-self: flex-start;
+  border: 2px solid #444;
+  background: transparent;
+}
+
+.user-message {
+  color: white;
+  align-self: flex-end;
+  border: 2px solid #1e88e5;
+  background: transparent;
+}
+
+#chatbot-input-section {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background: #111111;
+  border-top: 1px solid #222;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  #chatbot-input-section {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+}
+
+#userInput {
+  flex: 1;
+  padding: 0.6rem 0.9rem;
+  border-radius: 16px;
+  background: #1d1d1d;
+  color: white;
+  border: 1px solid #333;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  #userInput {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+#userInput::placeholder {
+  color: #777;
+}
+
+#chatbot-send {
+  background: #1e88e5;
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  #chatbot-send {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+#chatbot-send:hover {
+  background: #1565c0;
+}
+
+#chatbot-send .material-icons {
+  color: white;
+  font-size: 20px;
+}
+
+@media (min-width: 768px) {
+  #chatbot-send .material-icons {
+    font-size: 24px;
+  }
+}
+
+/* ========== Fab Header Button ========== */
+.fab-header {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: 0.15s ease;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .fab-header {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+  }
+}
+
+.fab-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+.fab-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========== Scrollbar Styling ========== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f1e1e;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2d3748;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4a5568;
+}
+
+/* ========== Utility Classes ========== */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #a0aec0;
+  font-style: italic;
+}
+
+@media (min-width: 768px) {
+  .empty-state {
+    padding: 3rem 1rem;
+  }
+}
+
+/* ========== Print Styles ========== */
+@media print {
+  .tab-bar,
+  #chatbot-fab,
+  #chatbot-window {
+    display: none !important;
+  }
+
+  .app-container {
+    padding-bottom: 0;
+  }
 }
