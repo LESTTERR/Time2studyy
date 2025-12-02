@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="../css/classes.css">
   <link rel="stylesheet" href="../css/classcard.css">
   <link rel="stylesheet" href="../css/loading.css">
+  <link rel="stylesheet" href="../css/profile.css">
   
   <!-- Google Fonts preconnect for better loading performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -320,12 +321,58 @@
       </div>
     </div>
 
-    <!-- PROFILE SECTION (moved from profile.html) -->
-    <div class="content-section" id="profileSection">
-      <!-- paste the main content from profile.html here -->
-    </div>
 
+
+
+  
+  <!-- PROFILE SECTION -->
+<div class="content-section" id="profileSection">
+  <div class="profile-container">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+          <img id="userPhoto" src="../image/pfp.png" alt="Profile Picture" 
+               style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+
+          <button id="togglePfpOptions"
+            style="position: absolute; bottom: 0; left: -20px; background: #2196F3; color: white; border: none;
+            border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer;">+</button>
+
+          <!-- Profile Picture Selection Options -->
+          <div id="profileOptions" style="display: none; margin-top: 10px; background: #1a1a24; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+            <img src="../image/pfp.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
+            <img src="../image/pfp2.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
+            <img src="../image/pfp3.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
+          </div>
+          
+          <button id="savePfpBtn" style="display: none; margin-top: 8px; background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Save Picture</button>
+        </div>
+
+        <h2 id="userName">Loading...</h2>
+      </div>
+
+      <div class="profile-info">
+        <div class="info-row">
+          <span class="material-icons">email</span>
+          <input type="email" id="userEmail" disabled>
+        </div>
+        <div class="info-row">
+          <span class="material-icons">school</span>
+          <input type="text" id="userSchool" disabled>
+        </div>
+        <div class="info-row">
+          <span class="material-icons">calendar_today</span>
+          <input type="number" id="userAge" disabled>
+        </div>
+      </div>
+
+      <div class="profile-buttons">
+        <button class="logout-btn" id="logoutBtn">Log Out</button>
+        <button class="delete-btn" id="deleteBtn">Delete Account</button>
+      </div>
+    </div>
   </div>
+</div>
 
    <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- CHATBOT FLOATING ACTION BUTTON: AI assistant for app help -->
@@ -1155,7 +1202,140 @@ async function showFor(dayNum, month, year, user) {
       el.classList.add('selected-date');
     }
 
+
+
+
+
+
+
+
+
+    /*profile section*/
    
+
+
+/* PROFILE SECTION LOGIC */
+function initializeProfileSection(user) {
+  if (!user) return;
+  
+  const userName = document.getElementById('userName');
+  const userEmail = document.getElementById('userEmail');
+  const userSchool = document.getElementById('userSchool');
+  const userAge = document.getElementById('userAge');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+  
+  if (!userName) {
+    console.error("Profile elements not found");
+    return;
+  }
+
+  const loadProfile = async (uid) => {
+    try {
+      const userDoc = await getDoc(doc(db, "users", uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        userName.textContent = data.fullName || 'Not set';
+        userEmail.value = data.email || 'Not set';
+        userSchool.value = data.school || 'Not set';
+        userAge.value = data.age || 'Not set';
+
+        // Load saved profile picture
+        if (data.profilePicture) {
+          const userPhoto = document.getElementById('userPhoto');
+          if (userPhoto) userPhoto.src = data.profilePicture;
+        }
+      } else {
+        userName.textContent = "User not found";
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+      userName.textContent = "Error loading profile";
+    }
+  };
+
+  // Load profile data
+  loadProfile(user.uid);
+
+  // Logout functionality
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        window.location.href = 'login.html';
+      } catch (error) {
+        alert(`Logout failed: ${error.message}`);
+      }
+    });
+  }
+
+  // Delete account functionality
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            await deleteDoc(doc(db, "users", user.uid));
+            await user.delete();
+            window.location.href = 'login.html';
+          }
+        } catch (error) {
+          alert(`Error deleting account: ${error.message}`);
+        }
+      }
+    });
+  }
+
+  // Profile picture selection
+  let selectedPfpUrl = "";
+  const pfpOptions = document.querySelectorAll(".pfp-option");
+  const togglePfpBtn = document.getElementById("togglePfpOptions");
+  const savePfpBtn = document.getElementById("savePfpBtn");
+
+  if (pfpOptions.length > 0) {
+    pfpOptions.forEach(img => {
+      img.addEventListener("click", () => {
+        selectedPfpUrl = img.src;
+        const userPhoto = document.getElementById("userPhoto");
+        if (userPhoto) userPhoto.src = selectedPfpUrl;
+        if (savePfpBtn) savePfpBtn.style.display = "block";
+      });
+    });
+  }
+
+  if (savePfpBtn) {
+    savePfpBtn.addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (user && selectedPfpUrl) {
+        try {
+          await updateDoc(doc(db, "users", user.uid), {
+            profilePicture: selectedPfpUrl
+          });
+          alert("Profile picture updated!");
+          savePfpBtn.style.display = "none";
+        } catch (error) {
+          alert("Failed to update: " + error.message);
+        }
+      } else {
+        alert("Please select a profile picture first.");
+      }
+    });
+  }
+
+  if (togglePfpBtn) {
+    togglePfpBtn.addEventListener("click", () => {
+      const options = document.getElementById("profileOptions");
+      const saveBtn = document.getElementById("savePfpBtn");
+
+      const isVisible = options.style.display === "block";
+      options.style.display = isVisible ? "none" : "block";
+      if (saveBtn) saveBtn.style.display = isVisible ? "none" : "block";
+    });
+  }
+}
+
+
 
     /* ═══════════════════════════════════════════════════════════════ */
     /* CHECK UPCOMING ALERTS: Notify user of classes/tasks within 2 hours */
@@ -1461,6 +1641,7 @@ async function loadStatistics(user) {
     }
   })();
   </script>
+  
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- CHATBOT SCRIPT: Handle FAB interaction and message sending -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
