@@ -14,13 +14,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(180deg, #0f1a34, rgb(54, 68, 101));
+      background: black;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
     }
 
     .auth-card {
-      background: rgb(25, 25, 33);
+      background:var(--card-bg);
       padding: 2rem;
       border-radius: 12px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.722);
@@ -82,7 +82,7 @@
 
     button {
       padding: 0.8rem;
-      background: rgb(54, 68, 101);
+      background: var(--primary);
       color: rgb(255, 255, 255);
       border: none;
       border-radius: 12px;
@@ -94,7 +94,7 @@
     }
 
     button:hover {
-      background: #152852;
+      background: #2a79c3;
       transform: scale(1.02);
     }
 
@@ -106,7 +106,7 @@
     }
 
     a {
-      color: #516798;
+      color: var(--primary);
       text-decoration: none;
       font-weight: 600;
       transition: opacity 0.3s ease;

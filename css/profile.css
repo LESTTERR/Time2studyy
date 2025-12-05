@@ -1,15 +1,17 @@
 /* ------------------------------
-   Modern Dark Profile Styles
+   Simple Dark Profile Styles
    ------------------------------ */
 
 :root {
-  --bg: #0f0f15;
-  --card: #1a1a24;
-  --accent: #4b8bff;
-  --text: #e5e5e5;
-  --subtext: #9ca3af;
+  --bg: rgb(25, 25, 33);
+  --card: rgba(78, 78, 78, 0.411);
+  --accent: #38c0ff;
+  --text: #e6eef8;
+  --subtext: rgba(230,238,248,0.45);
   --danger: #ff4e4e;
-  --rounded: 18px;
+  --rounded: 16px;
+  --shadow: 0 8px 32px rgba(15, 15, 16, 0.195);
+  --border: 1px solid rgba(17, 13, 13, 0.505);
 }
 
 /* Entire container */
@@ -22,13 +24,13 @@
 
 /* Card */
 .profile-card {
-  background: var(--card);
+  background: black;
   width: 100%;
   max-width: 380px;
   padding: 25px;
   border-radius: var(--rounded);
-  box-shadow: 0 0 20px rgba(70, 85, 255, 0.1);
-  border: 1px solid rgba(75, 139, 255, 0.15);
+  box-shadow: var(--shadow);
+  border: var(--border);
   color: var(--text);
 }
 
@@ -50,79 +52,19 @@
   width: 95px !important;
   height: 95px !important;
   border-radius: 50%;
-  border: 3px solid var(--accent);
-  box-shadow: 0 0 12px rgba(75, 139, 255, 0.4);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 15px rgba(56, 192, 255, 0.3);
 }
 
-/* + Button to choose PFP */
-#togglePfpOptions {
-  background: var(--accent);
-  border: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-#togglePfpOptions:hover {
-  transform: scale(1.1);
-  background: #5e9aff;
-}
-
-/* PFP options dropdown */
-#profileOptions {
-  background: var(--card);
-  border: 1px solid rgba(75, 139, 255, 0.25);
-  border-radius: var(--rounded);
-  padding: 10px 12px;
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.pfp-option {
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: 0.2s ease;
-  border: 2px solid transparent;
-}
-
-.pfp-option:hover {
-  transform: scale(1.1);
-  border-color: var(--accent);
-}
-
-/* Save button */
-#savePfpBtn {
-  background: var(--accent);
-  border: none;
-  padding: 8px 18px;
-  border-radius: var(--rounded);
-  color: white;
-  margin-top: 10px;
-  cursor: pointer;
-  font-weight: 500;
-  width: 120px;
-  transition: 0.2s;
-}
-
-#savePfpBtn:hover {
-  background: #5e9aff;
-  transform: translateY(-2px);
-}
 
 /* Info rows */
 .profile-info {
-  margin-top: 18px;
+  margin-top: 20px;
 }
 
 .info-row {
-  background: #15151c;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.126);
   padding: 12px 14px;
   border-radius: var(--rounded);
   display: flex;
@@ -133,7 +75,7 @@
 
 .info-row span {
   color: var(--accent);
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .info-row input {
@@ -141,7 +83,7 @@
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 /* Buttons */
@@ -152,32 +94,21 @@
   gap: 12px;
 }
 
-.logout-btn {
-  background: #2c2c35;
+.logout-btn, .delete-btn {
+  background: rgba(255, 255, 255, 0.1);
   padding: 12px;
   border-radius: var(--rounded);
   color: var(--text);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.2s ease;
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-.logout-btn:hover {
-  background: #3a3a45;
-}
-
-.delete-btn {
-  background: var(--danger);
-  padding: 12px;
-  border-radius: var(--rounded);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.delete-btn:hover {
-  background: #ff3333;
+.logout-btn:hover, .delete-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Loading */

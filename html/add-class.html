@@ -5,39 +5,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Add Class</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-     background: linear-gradient(180deg, #87CEEB, #1E3C72);
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      padding: 1rem;
-    }
+     background: linear-gradient(180deg, #000000, rgb(0, 0, 0));
+       font-family: 'M PLUS Rounded 1c', sans-serif;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       height: 100vh;
+       padding: 1rem;
+     }
 
-    .form-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: var(--border);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      max-width: 400px;
-      width: 100%;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
+     .form-card {
+       background: rgba(78, 78, 78, 0.411);
+       backdrop-filter: blur(10px);
+       border: 1px solid rgba(17, 13, 13, 0.505);
+       border-radius: 16px;
+       box-shadow: 0 8px 32px rgba(15, 15, 16, 0.195);
+       max-width: 400px;
+       width: 100%;
+       padding: 2rem;
+       display: flex;
+       flex-direction: column;
+       gap: 1.5rem;
+       color: #e6eef8;
+     }
 
-    .form-card h2 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      text-align: center;
-      color: var(--text);
-    }
+     .form-card h2 {
+       font-size: 1.5rem;
+       font-weight: 600;
+       text-align: center;
+       color: #e6eef8;
+     }
 
     form {
       display: flex;
@@ -48,11 +49,11 @@
     input[type="text"],
     input[type="time"] {
       padding: 0.8rem 1rem;
-      border: 1.3px solid black;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
       font-size: 1rem;
-      color: var(--text);
+      color: #e6eef8;
     }
 
     .select-days-container {
@@ -65,15 +66,16 @@
       justify-content: center;
       padding: 0.3rem 0.5rem;
       font-size: 1rem;
-      border: 1.3px solid black;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      color: #e6eef8;
       cursor: pointer;
       transition: background 0.3s ease;
     }
 
     .select-days-btn:hover {
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .select-days-box {
@@ -81,13 +83,15 @@
       position: absolute;
       top: 100%;
       left: 0;
-      background-color: white;
+      background: rgba(78, 78, 78, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 32px rgba(15, 15, 16, 0.3);
       width: 100%;
       padding: 1rem;
       z-index: 10;
       margin-top: 0.5rem;
+      backdrop-filter: blur(10px);
     }
 
     .select-days-box label {
@@ -98,19 +102,19 @@
     .weekday-btn {
       padding: 0.5rem;
       font-size: 0.9rem;
-      border: 1px solid rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
       cursor: pointer;
       transition: background 0.3s ease;
       margin: 0.2rem;
       width: 50px;
       text-align: center;
-      background-color: #fff; /* Default background */
-      color: #007bff; /* Default text color is blue */
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #e6eef8;
     }
 
     .weekday-btn.active {
-      background-color: #007bff;
+      background-color: #38c0ff;
       color: white;
     }
 
@@ -128,11 +132,11 @@
     }
 
     button[type="submit"] {
-      background: var(--primary);
+      background: #38c0ff;
       color: white;
       font-weight: 600;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 0.8rem;
       font-size: 1rem;
       cursor: pointer;
@@ -140,13 +144,13 @@
     }
 
     button[type="submit"]:hover {
-      background: #1fa4e5;
+      background: #1e88e5;
     }
 
     #backClasses {
       background: none;
       border: none;
-      color: var(--secondary);
+      color: #e6eef8;
       font-weight: 500;
       font-size: 0.95rem;
       text-align: center;
@@ -155,7 +159,7 @@
     }
 
     #backClasses:hover {
-      color: #473dff;
+      color: #38c0ff;
     }
 
     .time-container {
@@ -182,7 +186,7 @@
       <input type="text" id="className" placeholder="Class Name" required>
       <input type="text" id="instructorName" placeholder="Instructor Name" required>
 
-      <label style="font-weight: 500; color: var(--text);">Select Days:</label>
+      <label style="font-weight: 500; color: #e6eef8;">Select Days:</label>
       <div class="select-days-container">
         <div class="select-days-btn" id="selectDaysBtn">Select Days</div>
         <div class="select-days-box" id="selectDaysBox">
@@ -198,7 +202,7 @@
         </div>
       </div>
 
-      <label style="font-weight: 500; color: var(--text);">Class Time:</label>
+      <label style="font-weight: 500; color: #e6eef8;">Class Time:</label>
       <div class="time-container">
         <input type="time" id="startTime" required>
         <span class="time-separator"> - </span>
@@ -231,6 +235,23 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    // Notification function
+    function showNotification(message) {
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        background: rgba(0,0,0,0.8); color: white; padding: 12px 16px;
+        border-radius: 8px; font-size: 14px; max-width: 300px;
+      `;
+      container.textContent = message;
+      document.body.appendChild(container);
+      setTimeout(() => {
+        if (document.body.contains(container)) {
+          document.body.removeChild(container);
+        }
+      }, 3000);
+    }
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -274,11 +295,11 @@
 
         // Validation
         if (!name || !startTime || !endTime) {
-          alert('Please fill in all required fields.');
+          showNotification('Please fill in all required fields.');
           return;
         }
         if (!days) {
-          alert('Please select at least one day.');
+          showNotification('Please select at least one day.');
           return;
         }
 
@@ -292,16 +313,16 @@
             createdAt: new Date().toISOString()
           });
 
-          alert("✅ Class saved successfully!");
-          window.location.href = "classes.html";
+          showNotification("Class saved successfully!");
+          setTimeout(() => window.location.href = "home.html", 1000);
         } catch (err) {
           console.error("Error saving class:", err);
-          alert("❌ Failed to save class. Please try again.");
+          showNotification("Failed to save class. Please try again.");
         }
       });
 
       // Back button handler
-      document.getElementById('backClasses').onclick = () => window.location = 'classes.html';
+      document.getElementById('backClasses').onclick = () => window.location = 'home.html';
     });
   </script>
 

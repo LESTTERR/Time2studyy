@@ -185,8 +185,8 @@
 /* Deadline badge */
 .full-task-card .deadline {
   display: inline-block;
-  background: #718096;
-  color: #fff;
+  background: #393b3fa4;
+  color: #ff6b6b;
   padding: 0.3rem 0.7rem;
   border-radius: 16px;
   font-size: 0.8rem;

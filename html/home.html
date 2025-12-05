@@ -179,6 +179,18 @@
 
   <!-- MAIN APPLICATION CONTAINER: Hidden until Firebase auth completes -->
   <div class="app-container" style="display: none;">
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>Confirm Delete</h3>
+      <p id="confirmMessage">Are you sure you want to delete this item?</p>
+      <div class="modal-buttons">
+        <button id="confirmYes" class="modal-btn yes-btn">Yes</button>
+        <button id="confirmNo" class="modal-btn no-btn">No</button>
+      </div>
+    </div>
+  </div>
     
     <!-- HOME SECTION: Calendar + Schedule + Tasks layout -->
     <div class="content-section active" id="homeSection">
@@ -257,6 +269,12 @@
           <!-- FAB moved into header (RIGHT SIDE) -->
           <button id="addTaskFab" class="fab-header material-icons">add</button>
         </div>
+        <div class="task-filters">
+          <button id="showAll" class="filter-btn active">All</button>
+          <button id="showAssignments" class="filter-btn">Assignments</button>
+          <button id="showProjects" class="filter-btn">Projects</button>
+          <button id="showDone" class="filter-btn">Done</button>
+        </div>
         <div class="task-list" id="tasksList">
           <!-- Tasks will be loaded here from Firestore -->
         </div>
@@ -265,6 +283,21 @@
 
     <!-- DASHBOARD SECTION -->
     <div class="content-section" id="dashboardSection">
+      <!-- Motivational Section -->
+      <div class="motivational-section">
+        <div class="quote-card">
+          <blockquote id="dailyQuote">"The only way to do great work is to love what you do." - Steve Jobs</blockquote>
+        </div>
+      </div>
+
+      <!-- Recent Activity Timeline -->
+      <div class="activity-timeline">
+        <h3>Recent Activity</h3>
+        <div id="activityList" class="activity-list">
+          <!-- Activities will be loaded here -->
+        </div>
+      </div>
+
       <div class="dashboard-grid">
         <!-- Circular Progress Cards -->
         <div class="circle-card">
@@ -330,24 +363,7 @@
   <div class="profile-container">
     <div class="profile-card">
       <div class="profile-header">
-        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-          <img id="userPhoto" src="../image/pfp.png" alt="Profile Picture" 
-               style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
-
-          <button id="togglePfpOptions"
-            style="position: absolute; bottom: 0; left: -20px; background: #2196F3; color: white; border: none;
-            border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer;">+</button>
-
-          <!-- Profile Picture Selection Options -->
-          <div id="profileOptions" style="display: none; margin-top: 10px; background: #1a1a24; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-            <img src="../image/pfp.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
-            <img src="../image/pfp2.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
-            <img src="../image/pfp3.png" class="pfp-option" style="width: 50px; cursor: pointer; margin: 4px;">
-          </div>
-          
-          <button id="savePfpBtn" style="display: none; margin-top: 8px; background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Save Picture</button>
-        </div>
-
+        <img id="userPhoto" src="../image/pfp.png" alt="Profile Picture">
         <h2 id="userName">Loading...</h2>
       </div>
 
@@ -368,7 +384,7 @@
 
       <div class="profile-buttons">
         <button class="logout-btn" id="logoutBtn">Log Out</button>
-        <button class="delete-btn" id="deleteBtn">Delete Account</button>
+        <button class="delete-btn" id="deleteBtn">Delete</button>
       </div>
     </div>
   </div>
@@ -475,8 +491,8 @@
   <script type="module">
     // Firebase imports: Database and Authentication
     import { db, auth } from "../js/firebase-init.js";
-    import { collection, query, orderBy, where, onSnapshot, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { collection, query, orderBy, where, onSnapshot, getDocs, getDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     
     // Expose auth (and db) to non-module scripts (chatbot code uses `auth`)
     // This prevents "auth is not defined" in non-module code like sendMessageToDialogflow
@@ -505,6 +521,7 @@ onAuthStateChanged(auth, async (user) => {
     await loadStatistics(user);
     initializeClassesSection(user);
     initializeTasksSection(user);
+    initializeProfileSection(user);
     
     // mark auth/data ready so other scripts can safely hide loader
     window._authFinished = true;
@@ -588,6 +605,9 @@ classes.forEach(d => {
             <div class="class-item-title">
               <h4>${d.name}</h4>
             </div>
+            <button class="delete-btn" data-id="${d.id}">
+              <span class="material-icons">delete</span>
+            </button>
           </div>
           <div class="class-item-info">
             <div class="info-item">
@@ -598,14 +618,9 @@ classes.forEach(d => {
               <span class="info-label">Time</span>
               <span class="info-value">${start12h} - ${end12h}</span>
             </div>
-            <div class="info-item info-item-advisor">
+            <div class="info-item">
               <span class="info-label">Advisor</span>
-              <div class="advisor-with-delete">
-                <span class="info-value">${d.instructor || 'N/A'}</span>
-                <button class="delete-btn" data-id="${d.id}">
-                  <span class="material-icons">delete</span>
-                </button>
-              </div>
+              <span class="info-value">${d.instructor || 'N/A'}</span>
             </div>
           </div>
         `;
@@ -614,24 +629,38 @@ classes.forEach(d => {
       });
 
       // Delete button listeners
-      document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const confirmDelete = confirm("Are you sure you want to delete this class?");
-          if (!confirmDelete) return;
-
+      document.querySelectorAll("#classesSection .delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
           const id = btn.dataset.id;
-          await deleteDoc(doc(db, "classes", id));
-          btn.closest(".class-item").remove();
+          const modal = document.getElementById('confirmModal');
+          const message = document.getElementById('confirmMessage');
+          message.textContent = "Are you sure you want to delete this class?";
+          modal.style.display = 'flex';
 
-          const cached = localStorage.getItem("classes");
-          if (cached) {
-            const updated = JSON.parse(cached).filter(cls => cls.id !== id);
-            localStorage.setItem("classes", JSON.stringify(updated));
-          }
+          document.getElementById('confirmYes').onclick = async () => {
+            modal.style.display = 'none';
+            try {
+              await deleteDoc(doc(db, "classes", id));
+              btn.closest(".class-item").remove();
 
-          if (!classesList.children.length) {
-            classesList.innerHTML = "<p style='text-align:center; color:gray;'>No classes found. Add your first class!</p>";
-          }
+              const cached = localStorage.getItem("classes");
+              if (cached) {
+                const updated = JSON.parse(cached).filter(cls => cls.id !== id);
+                localStorage.setItem("classes", JSON.stringify(updated));
+              }
+
+              if (!classesList.children.length) {
+                classesList.innerHTML = "<p style='text-align:center; color:gray;'>No classes found. Add your first class!</p>";
+              }
+              showNotification("Class deleted successfully");
+            } catch (error) {
+              showNotification("Failed to delete class. Please try again.");
+            }
+          };
+
+          document.getElementById('confirmNo').onclick = () => {
+            modal.style.display = 'none';
+          };
         });
       });
     };
@@ -779,21 +808,21 @@ classes.forEach(d => {
         const taskSnapshot = await getDocs(taskQuery);
         
         taskSnapshot.forEach(doc => {
-          const t = doc.data();
-          // Convert Firebase timestamp to JavaScript Date
-          const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
-          
-          // Check if task is in current month being displayed
-          if (due.getMonth() === month && due.getFullYear() === year) {
-            const day = due.getDate();
-            // Color code by task type: green=assignment, red=project, black=other
-            const taskType = (t.type || "").toLowerCase();
-            const color = 
-              taskType === "assignment" ? "green" :
-              taskType === "project" ? "red" : "black";
-            taskDotColors.set(day, color);
-          }
-        });
+           const t = doc.data();
+           // Convert Firebase timestamp to JavaScript Date
+           const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
+
+           // Check if task is in current month being displayed and not completed
+           if (!t.completed && due.getMonth() === month && due.getFullYear() === year) {
+             const day = due.getDate();
+             // Color code by task type: green=assignment, red=project, black=other
+             const taskType = (t.type || "").toLowerCase();
+             const color =
+               taskType === "assignment" ? "green" :
+               taskType === "project" ? "red" : "black";
+             taskDotColors.set(day, color);
+           }
+         });
       } else {
         console.warn("renderCalendar: User or user.uid is invalid for task query.");
       }
@@ -861,28 +890,28 @@ async function loadPendingTasks(user) {
         const now = new Date();
 
         snapshot.forEach(doc => {
-          const t = doc.data();
-          try {
-            const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
+           const t = doc.data();
+           try {
+             const due = t.dueDate?.toDate ? t.dueDate.toDate() : new Date(t.dueDate);
 
-            if (due >= now) {
-              const ti = document.createElement('div');
-              const typeClass = t.type ? t.type.toLowerCase() : '';
-              ti.className = `task-item ${typeClass}`;
+             if (!t.completed && due >= now) {
+               const ti = document.createElement('div');
+               const typeClass = t.type ? t.type.toLowerCase() : '';
+               ti.className = `task-item ${typeClass}`;
 
-              ti.innerHTML = `
-                <div class="task-info">
-                  <h4>${t.name}</h4>
-                  <p>${t.description}</p>
-                  <span class="deadline">Deadline: ${due.toLocaleDateString()}</span>
-                </div>
-              `;
-              pending.appendChild(ti);
-            }
-          } catch (error) {
-            console.error('Error processing task:', error);
-          }
-        });
+               ti.innerHTML = `
+                 <div class="task-info">
+                   <h4>${t.name}</h4>
+                   <p>${t.description}</p>
+                   <span class="deadline">Deadline: ${due.toLocaleDateString()}</span>
+                 </div>
+               `;
+               pending.appendChild(ti);
+             }
+           } catch (error) {
+             console.error('Error processing task:', error);
+           }
+         });
       }
       
       if (first) {
@@ -923,6 +952,13 @@ const tasksList = document.getElementById("tasksList");
         return;
       }
 
+      // Sort: unfinished first, then done
+      tasks.sort((a, b) => {
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+        return 0;
+      });
+
       tasks.forEach(task => {
         const dueDate = task.dueDate?.toDate ? task.dueDate.toDate() : new Date(task.dueDate);
         const options = {
@@ -939,10 +975,7 @@ const tasksList = document.getElementById("tasksList");
 
         div.innerHTML = `
           <div class="task-info">
-            <p style="font-size: 1.5em; font-weight: bold; color: ${task.type === 'Assignment' ? 'green' : task.type === 'Project' ? 'red' : 'black'};">
-              <strong>${task.type}</strong>
-            </p>
-            <h4>${task.name}</h4>
+            <h4 class="${task.type ? task.type.toLowerCase() : ''}">${task.name}</h4>
             <p>${task.description}</p>
             <span class="deadline">Deadline: ${dueDate.toLocaleDateString('en-US', options)}</span>
           </div>
@@ -953,6 +986,8 @@ const tasksList = document.getElementById("tasksList");
             </button>
           </div>
         `;
+
+        div.classList.add(task.type ? task.type.toLowerCase() : '');
 
         tasksList.appendChild(div);
       });
@@ -967,33 +1002,46 @@ const tasksList = document.getElementById("tasksList");
             taskItem.classList.add("done");
             btn.disabled = true;
             btn.textContent = "Done!";
+            showNotification("Task marked as completed!");
           } catch (error) {
-            alert("Failed to mark as done. Please try again.");
+            showNotification("Failed to mark as done. Please try again.");
           }
         });
       });
 
       document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
+        btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-id");
-          if (!confirm("Are you sure you want to delete this task?")) return;
-          try {
-            await deleteDoc(doc(db, "tasks", id));
-            btn.closest(".task-item").remove();
+          const modal = document.getElementById('confirmModal');
+          const message = document.getElementById('confirmMessage');
+          message.textContent = "Are you sure you want to delete this task?";
+          modal.style.display = 'flex';
 
-            const cached = localStorage.getItem("tasks");
-            if (cached) {
-              const updated = JSON.parse(cached).filter(t => t.id !== id);
-              localStorage.setItem("tasks", JSON.stringify(updated));
-            }
+          document.getElementById('confirmYes').onclick = async () => {
+            modal.style.display = 'none';
+            try {
+              await deleteDoc(doc(db, "tasks", id));
+              btn.closest(".task-item").remove();
 
-            if (!tasksList.children.length) {
-              tasksList.innerHTML = "<p style='text-align:center;color:gray;'>No tasks found. Start by adding one!</p>";
+              const cached = localStorage.getItem("tasks");
+              if (cached) {
+                const updated = JSON.parse(cached).filter(t => t.id !== id);
+                localStorage.setItem("tasks", JSON.stringify(updated));
+              }
+
+              if (!tasksList.children.length) {
+                tasksList.innerHTML = "<p style='text-align:center;color:gray;'>No tasks found. Start by adding one!</p>";
+              }
+              showNotification("Task deleted successfully");
+            } catch (error) {
+              console.error("Delete failed:", error);
+              showNotification("Failed to delete task. Please try again.");
             }
-          } catch (error) {
-            console.error("Delete failed:", error);
-            alert("Failed to delete task. Please try again.");
-          }
+          };
+
+          document.getElementById('confirmNo').onclick = () => {
+            modal.style.display = 'none';
+          };
         });
       });
     };
@@ -1029,6 +1077,53 @@ const tasksList = document.getElementById("tasksList");
 
     document.getElementById("addTaskFab").addEventListener("click", () => {
       window.location.href = "add-task.html";
+    });
+
+    // Task filter buttons
+    const showAllBtn = document.getElementById("showAll");
+    const showAssignmentsBtn = document.getElementById("showAssignments");
+    const showProjectsBtn = document.getElementById("showProjects");
+    const showDoneBtn = document.getElementById("showDone");
+
+    function filterTasks(filter) {
+      const tasks = document.querySelectorAll("#tasksList .task-item");
+      tasks.forEach(task => {
+        if (filter === 'all') {
+          task.style.display = 'flex';
+        } else if (filter === 'assignment' && task.classList.contains('assignment') && !task.classList.contains('done')) {
+          task.style.display = 'flex';
+        } else if (filter === 'project' && task.classList.contains('project') && !task.classList.contains('done')) {
+          task.style.display = 'flex';
+        } else if (filter === 'done' && task.classList.contains('done')) {
+          task.style.display = 'flex';
+        } else {
+          task.style.display = 'none';
+        }
+      });
+    }
+
+    showAllBtn.addEventListener('click', () => {
+      filterTasks('all');
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      showAllBtn.classList.add('active');
+    });
+
+    showAssignmentsBtn.addEventListener('click', () => {
+      filterTasks('assignment');
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      showAssignmentsBtn.classList.add('active');
+    });
+
+    showProjectsBtn.addEventListener('click', () => {
+      filterTasks('project');
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      showProjectsBtn.classList.add('active');
+    });
+
+    showDoneBtn.addEventListener('click', () => {
+      filterTasks('done');
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      showDoneBtn.classList.add('active');
     });
   }
 
@@ -1262,9 +1357,10 @@ function initializeProfileSection(user) {
     logoutBtn.addEventListener('click', async () => {
       try {
         await signOut(auth);
-        window.location.href = 'login.html';
+        showNotification('Logged out successfully');
+        setTimeout(() => window.location.href = 'login.html', 1000);
       } catch (error) {
-        alert(`Logout failed: ${error.message}`);
+        showNotification(`Logout failed: ${error.message}`);
       }
     });
   }
@@ -1278,61 +1374,16 @@ function initializeProfileSection(user) {
           if (user) {
             await deleteDoc(doc(db, "users", user.uid));
             await user.delete();
-            window.location.href = 'login.html';
+            showNotification('Account deleted successfully');
+            setTimeout(() => window.location.href = 'login.html', 1000);
           }
         } catch (error) {
-          alert(`Error deleting account: ${error.message}`);
+          showNotification(`Error deleting account: ${error.message}`);
         }
       }
     });
   }
 
-  // Profile picture selection
-  let selectedPfpUrl = "";
-  const pfpOptions = document.querySelectorAll(".pfp-option");
-  const togglePfpBtn = document.getElementById("togglePfpOptions");
-  const savePfpBtn = document.getElementById("savePfpBtn");
-
-  if (pfpOptions.length > 0) {
-    pfpOptions.forEach(img => {
-      img.addEventListener("click", () => {
-        selectedPfpUrl = img.src;
-        const userPhoto = document.getElementById("userPhoto");
-        if (userPhoto) userPhoto.src = selectedPfpUrl;
-        if (savePfpBtn) savePfpBtn.style.display = "block";
-      });
-    });
-  }
-
-  if (savePfpBtn) {
-    savePfpBtn.addEventListener("click", async () => {
-      const user = auth.currentUser;
-      if (user && selectedPfpUrl) {
-        try {
-          await updateDoc(doc(db, "users", user.uid), {
-            profilePicture: selectedPfpUrl
-          });
-          alert("Profile picture updated!");
-          savePfpBtn.style.display = "none";
-        } catch (error) {
-          alert("Failed to update: " + error.message);
-        }
-      } else {
-        alert("Please select a profile picture first.");
-      }
-    });
-  }
-
-  if (togglePfpBtn) {
-    togglePfpBtn.addEventListener("click", () => {
-      const options = document.getElementById("profileOptions");
-      const saveBtn = document.getElementById("savePfpBtn");
-
-      const isVisible = options.style.display === "block";
-      options.style.display = isVisible ? "none" : "block";
-      if (saveBtn) saveBtn.style.display = isVisible ? "none" : "block";
-    });
-  }
 }
 
 
@@ -1495,8 +1546,56 @@ async function loadStatistics(user) {
         totalClasses
       });
 
+      // Collect recent tasks (last 5 by due date)
+      const allTasks = taskSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      const recentTasks = allTasks.sort((a, b) => {
+        const aDate = a.dueDate?.toDate ? a.dueDate.toDate() : new Date(a.dueDate);
+        const bDate = b.dueDate?.toDate ? b.dueDate.toDate() : new Date(b.dueDate);
+        return bDate - aDate; // Most recent first
+      }).slice(0, 5);
+
+      // Update motivational message and activity
+      updateMotivationalContent(completedTasks, totalTasks, recentTasks);
+
     });
   });
+}
+
+function updateMotivationalContent(completed, total, recentTasks = []) {
+  const quoteEl = document.getElementById('dailyQuote');
+  const activityListEl = document.getElementById('activityList');
+
+  if (!quoteEl || !activityListEl) return;
+
+  // Rotate quotes daily
+  const quotes = [
+    '"The only way to do great work is to love what you do." - Steve Jobs',
+    '"Believe you can and you\'re halfway there." - Theodore Roosevelt',
+    '"The future belongs to those who believe in the beauty of their dreams." - Eleanor Roosevelt',
+    '"You miss 100% of the shots you don\'t take." - Wayne Gretzky',
+    '"The best way to predict the future is to create it." - Peter Drucker'
+  ];
+  const today = new Date().getDate();
+  quoteEl.textContent = quotes[today % quotes.length];
+
+  // Update activity list
+  activityListEl.innerHTML = '';
+  const recentActivities = recentTasks.slice(0, 5); // Last 5
+  if (recentActivities.length === 0) {
+    activityListEl.innerHTML = '<p style="text-align: center; color: var(--subtext);">No recent activity</p>';
+  } else {
+    recentActivities.forEach(task => {
+      const activityItem = document.createElement('div');
+      activityItem.className = 'activity-item';
+      const action = task.completed ? 'Completed' : 'Added';
+      const icon = task.completed ? '✅' : '➕';
+      activityItem.innerHTML = `
+        <div>${icon} ${action} ${task.type || 'Task'}: ${task.name}</div>
+        <div class="activity-time">${new Date(task.dueDate?.toDate ? task.dueDate.toDate() : task.dueDate).toLocaleDateString()}</div>
+      `;
+      activityListEl.appendChild(activityItem);
+    });
+  }
 }
 
 

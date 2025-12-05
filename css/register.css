@@ -16,14 +16,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(180deg, #0f1a34, rgb(54, 68, 101));
+      background: black;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
     }
 
     .auth-card {
    
-    background: rgb(25, 25, 33);
+    background: VAR(--card-bg);
       padding: 2rem;
       border-radius: 12px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.819);
@@ -61,28 +61,28 @@
 
     input {
       padding: 0.8rem;
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
       font-size: 0.95rem;
       width: 100%;
-      background: white;
-      color: var(--text-color);
+      background: rgba(255, 255, 255, 0.1);
+      color: #e6eef8;
       transition: all 0.3s ease;
     }
 
     input::placeholder {
-      color: #506483
+      color: rgba(230, 238, 248, 0.6);
     }
 
     input:focus {
       outline: none;
-      border-color: var(--dark-blue);
-      box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.2);
+      border-color: #38c0ff;
+      box-shadow: 0 0 0 2px rgba(56, 192, 255, 0.2);
     }
 
     button {
       padding: 0.8rem;
-      background: var(--dark-blue);
+      background: #38c0ff;
       color: white;
       border: none;
       border-radius: 12px;
@@ -95,7 +95,7 @@
 
 
     button:hover {
-      background: #152852;
+      background: #1e88e5;
       transform: scale(1.02);
     }
 
@@ -107,7 +107,7 @@
     }
 
     a {
-      color: #516798;
+      color: VAR(--primary);
       text-decoration: none;
       font-weight: 600;
       transition: opacity 0.3s ease;

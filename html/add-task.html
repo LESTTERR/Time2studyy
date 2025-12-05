@@ -5,13 +5,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Add Task</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
     body {
-      background: linear-gradient(180deg, #87CEEB, #1E3C72);
-      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, #000000, rgb(0, 0, 0));
+      font-family: 'M PLUS Rounded 1c', sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -20,24 +20,25 @@
     }
 
     .form-card {
-      background: var(--card-bg, rgba(255, 255, 255, 0.3));
-      backdrop-filter: blur(12px);
-      border: var(--border, 1px solid #ccc);
-      border-radius: 24px;
-      box-shadow: var(--shadow, 0 4px 12px rgba(0, 0, 0, 0.2));
+      background: rgba(78, 78, 78, 0.411);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(17, 13, 13, 0.505);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(15, 15, 16, 0.195);
       max-width: 400px;
       width: 100%;
       padding: 2rem;
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
+      color: #e6eef8;
     }
 
     .form-card h2 {
       font-size: 1.5rem;
       font-weight: 600;
       text-align: center;
-      color: var(--text, black);
+      color: #e6eef8;
     }
 
     form {
@@ -51,7 +52,7 @@
       font-weight: 480;
       margin-bottom: 2px;
       margin-top: 2px;
-      color: black;
+      color: #e6eef8;
       font-size: 1.1rem;
     }
 
@@ -59,12 +60,12 @@
     input[type="datetime-local"],
     textarea {
       padding: 0.8rem 1rem;
-      border: 2px solid #333;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
       font-size: 1rem;
-      color: black;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+      color: #e6eef8;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
     }
 
     textarea {
@@ -89,22 +90,23 @@
       gap: 0.5rem;
       font-weight: 500;
       font-size: 1rem;
+      color: #e6eef8;
     }
 
     .assignment-label {
-      color: green;
+      color: #4CAF50;
     }
 
     .project-label {
-      color: red;
+      color: #f44336;
     }
 
     button[type="submit"] {
-      background: var(--primary, #007bff);
+      background: #38c0ff;
       color: white;
       font-weight: 600;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 0.8rem;
       font-size: 1rem;
       cursor: pointer;
@@ -112,13 +114,13 @@
     }
 
     button[type="submit"]:hover {
-      background: #1fa4e5;
+      background: #1e88e5;
     }
 
     #backTasks {
       background: none;
       border: none;
-      color: var(--secondary, #333);
+      color: #e6eef8;
       font-weight: 500;
       font-size: 0.95rem;
       text-align: center;
@@ -127,7 +129,7 @@
     }
 
     #backTasks:hover {
-      color: #473dff;
+      color: #38c0ff;
     }
   </style>
 </head>
@@ -179,6 +181,23 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Notification function
+    function showNotification(message) {
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        background: rgba(0,0,0,0.8); color: white; padding: 12px 16px;
+        border-radius: 8px; font-size: 14px; max-width: 300px;
+      `;
+      container.textContent = message;
+      document.body.appendChild(container);
+      setTimeout(() => {
+        if (document.body.contains(container)) {
+          document.body.removeChild(container);
+        }
+      }, 3000);
+    }
+
     const form = document.getElementById('taskForm');
     const backBtn = document.getElementById('backTasks');
 
@@ -188,7 +207,7 @@
         return;
       }
 
-      backBtn.onclick = () => window.location = 'tasks.html';
+      backBtn.onclick = () => window.location = 'home.html';
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -199,7 +218,7 @@
         const type = document.querySelector('input[name="taskType"]:checked').value;
 
         if (!name || !desc || !due) {
-          alert("Please fill in all fields.");
+          showNotification("Please fill in all fields.");
           return;
         }
 
@@ -212,11 +231,11 @@
             userId: user.uid,
             createdAt: new Date().toISOString()
           });
-          alert("✅ Task saved!");
-          window.location.href = "tasks.html";
+          showNotification("Task saved successfully!");
+          setTimeout(() => window.location.href = "home.html", 1000);
         } catch (err) {
           console.error("Error saving task:", err);
-          alert("❌ Error saving task. Please try again.");
+          showNotification("Error saving task. Please try again.");
         }
       });
     });
