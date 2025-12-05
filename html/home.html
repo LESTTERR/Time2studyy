@@ -491,8 +491,8 @@
   <script type="module">
     // Firebase imports: Database and Authentication
     import { db, auth } from "../js/firebase-init.js";
-    import { collection, query, orderBy, where, onSnapshot, getDocs, getDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { collection, query, orderBy, where, onSnapshot, getDocs, getDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
     
     // Expose auth (and db) to non-module scripts (chatbot code uses `auth`)
     // This prevents "auth is not defined" in non-module code like sendMessageToDialogflow
@@ -1745,7 +1745,7 @@ function updateMotivationalContent(completed, total, recentTasks = []) {
   <!-- CHATBOT SCRIPT: Handle FAB interaction and message sending -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <div id="alertBoxContainer" style="position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;"></div>
-  <script src="../js/chatbot.js"></script>
+  <script type="module" src="../js/chatbot.js"></script>
   <script src="../js/script.js"></script>
 
 </body>
