@@ -3,11 +3,11 @@
 <head>
     <!-- Manifest: if manifest.json is one level up, use ../manifest.json.
          If manifest.json is in html/js/, use js/manifest.json instead. -->
-    <link rel="manifest" href="../manifest.json">
+    <link rel="manifest" href="js/manifest.json">
     <meta name="theme-color" content="#2196F3">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyFlow | Smart Study Scheduling App</title>
+    <title>Time2Study | Smart Study Scheduling App</title>
     <style>
        
 * {
@@ -19,7 +19,7 @@
 
 body {
     /* background image path fixed to reference the image folder in project root */
-    background: url('../image/blue.jpg') no-repeat center center;
+    background: url('image/blue.jpg') no-repeat center center;
     background-size: cover;
     min-height: 100vh;
     color: #2d3748;
@@ -335,7 +335,7 @@ footer {
 
 /* ===== Dark mode overrides ===== */
 body.dark {
-    background: linear-gradient(0deg, rgba(2,6,23,0.85), rgba(2,6,23,0.65)), url('blue.jpg') no-repeat center center;
+    background: linear-gradient(0deg, rgba(2,6,23,0.85), rgba(2,6,23,0.65)), url('image/blue.jpg') no-repeat center center;
     background-size: cover;
     color: #e6eef8;
 }
@@ -419,15 +419,15 @@ body.dark input, body.dark textarea, body.dark select {
     <header>
         <div class="logo-container">
             <!-- logo path fixed -->
-            <img src="../image/logo1.png" alt="StudyFlow Logo" class="logo-image">
+            <img src="image/logo1.png" alt="StudyFlow Logo" class="logo-image">
             <span class="logo-text">Time2Study</span>
         </div>
         <nav>
             <ul>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#screenshots">Screenshots</a></li>
-                
-                <li><a href="../Time2studyy/html/login.html" class="cta-button">Login</a></li>
+
+                <li><a href="html/login.html" class="cta-button">Login</a></li>
             </ul>
         </nav>
 
@@ -437,9 +437,9 @@ body.dark input, body.dark textarea, body.dark select {
 
     <section class="hero">
         <h1>Organize Your Study Schedule Smarter</h1>
-        <p>Time2Study is an scheduling app that helps students optimize their study time, track progress, and achieve academic goals.</p>
+        <p>Time2Study is a scheduling app that helps students optimize their study time, track progress, and achieve academic goals.</p>
         <div>
-            <a href="../Time2studyy/html/login.html" class="cta-button">Get Started</a>
+            <a href="html/login.html" class="cta-button">Get Started</a>
             <a href="#features" class="cta-button secondary-button">Learn More</a>
         </div>
     </section>
@@ -460,7 +460,7 @@ body.dark input, body.dark textarea, body.dark select {
                 <i class="fas fa-comments"></i>
             </div>
             <h3 class="feature-title">Chatbot Assistant</h3>
-            <p class="feature-desc">Interact with your schedule using a chatbot check tasks, add class by simply chatting.</p>
+            <p class="feature-desc">Interact with your schedule using a chatbot to check tasks, add classes by simply chatting.</p>
         </div>
 
         <div class="feature-card" style="animation: fadeIn 1s ease-out;">
@@ -502,15 +502,15 @@ body.dark input, body.dark textarea, body.dark select {
 <section class="screenshots" id="screenshots">
     <h2 class="section-title">App Screenshots</h2>
     <div class="screenshot-container">
-        <!-- screenshot paths fixed (prepend ../ if screenshots are in project root) -->
-        <img src="../image/hom.png" alt="Dashboard view" class="screenshot">
-        <img src="../image/sta.png" alt="Schedule view" class="screenshot">
-        <img src="../image/adt.png" alt="Progress analytics" class="screenshot">
-        <img src="../image/adn.png" alt="Resource library" class="screenshot">
-        <img src="../image/cht.png" alt="All classes view" class="screenshot">
-        <img src="../image/allt.png" alt="All tasks view" class="screenshot">
-        <img src="../image/allc.png" alt="Chatbot view" class="screenshot">
-        <img src="../image/prf.png" alt="statistic view" class="screenshot">
+        <!-- screenshot paths fixed -->
+        <img src="image/hom.png" alt="Dashboard view" class="screenshot">
+        <img src="image/sta.png" alt="Schedule view" class="screenshot">
+        <img src="image/adt.png" alt="Progress analytics" class="screenshot">
+        <img src="image/adn.png" alt="Resource library" class="screenshot">
+        <img src="image/cht.png" alt="All classes view" class="screenshot">
+        <img src="image/allt.png" alt="All tasks view" class="screenshot">
+        <img src="image/allc.png" alt="Chatbot view" class="screenshot">
+        <img src="image/prf.png" alt="Profile view" class="screenshot">
     </div>
 </section>
 
@@ -518,7 +518,7 @@ body.dark input, body.dark textarea, body.dark select {
     <footer>
         <div class="footer-content">
             <div class="footer-column">
-                <h3>StudyFlow</h3>
+                <h3>Time2Study</h3>
                 <p>The study scheduling app designed to help students achieve academic success through better time management and organization.</p>
             </div>
             
@@ -562,11 +562,27 @@ body.dark input, body.dark textarea, body.dark select {
     <!-- Service Worker Registration -->
     <script>
         if ("serviceWorker" in navigator) {
-            // Register the service worker using the correct relative path.
-            // If service-worker.js is in project root use '../service-worker.js'.
-            navigator.serviceWorker.register("../service-worker.js")
-                .then(() => console.log("Service Worker Registered"))
-                .catch(err => console.error("SW register failed:", err));
+            // Register the service worker
+            navigator.serviceWorker.register("js/service-worker.js")
+                .then((registration) => {
+                    console.log("[PWA] Service Worker Registered:", registration.scope);
+
+                    // Handle updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available
+                                    if (confirm('A new version of Time2Study is available. Reload to update?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        }
+                    });
+                })
+                .catch(err => console.error("[PWA] SW register failed:", err));
         }
     </script>
     
@@ -592,10 +608,13 @@ body.dark input, body.dark textarea, body.dark select {
 
   onAuthStateChanged(auth, (user) => {
     if (user && autoRedirect) {
-      window.location.href = '../html/home.html';
+      window.location.href = 'html/home.html';
     }
   });
 </script>
+
+<!-- PWA Install Script -->
+<script src="js/pwa-install.js"></script>
 
 <!-- Theme toggle script -->
 <script>

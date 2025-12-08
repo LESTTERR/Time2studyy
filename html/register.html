@@ -33,6 +33,20 @@
       </div>
 
       <div class="input-group">
+        <label style="font-weight: 500; color: #e6eef8;">Gender:</label>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; color: #e6eef8;">
+            <input type="radio" name="gender" value="male" required>
+            <span>Male</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; color: #e6eef8;">
+            <input type="radio" name="gender" value="female" required>
+            <span>Female</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="input-group">
         <input type="password" id="regPassword" placeholder="Password" required>
       </div>
       
@@ -79,9 +93,15 @@
     const fullName = getValue('fullName');
     const school = getValue('schoolName');
     const age = getValue('age');
+    const gender = document.querySelector('input[name="gender"]:checked')?.value;
 
     if (password !== confirmPassword) {
       alert("Passwords don't match!");
+      return;
+    }
+
+    if (!gender) {
+      alert("Please select your gender!");
       return;
     }
 
@@ -92,6 +112,9 @@
       // Send email verification
       await sendEmailVerification(user);
 
+      // Set profile picture based on gender
+      const profilePicture = gender === 'male' ? 'pfp.png' : 'pfp2.png';
+
       // Save user data
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
@@ -99,6 +122,8 @@
         fullName,
         school,
         age: parseInt(age),
+        gender,
+        profilePicture,
         createdAt: new Date()
       });
 

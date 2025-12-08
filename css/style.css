@@ -917,7 +917,7 @@ button:focus-visible {
   gap: 0.5rem;
   align-items: stretch;
   transition: 0.2s ease;
-  border-left: 4px solid var(--primary);
+  
   position: relative;
   text-align: left;
 }
@@ -1058,8 +1058,9 @@ button:focus-visible {
 }
 
 .info-value {
-  
-  text-align: left;
+   text-align: left;
+   min-width: 120px; /* Ensure consistent spacing for time values */
+   flex: 1; /* Allow value to take remaining space */
 }
 
 @media (min-width: 768px) {

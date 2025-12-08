@@ -1,21 +1,40 @@
 {
-  "name": "Time 2 Study",
+  "name": "Time2Study - Smart Study Scheduling",
   "short_name": "Time2Study",
-  "start_url": "/Time2study/index.html?autoRedirect=true",
-  
+  "description": "Organize Your Study Schedule Smarter - A comprehensive study planning app",
+  "start_url": "/Time2studyy/index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "background_color": "#2196F3",
   "theme_color": "#2196F3",
+  "categories": ["productivity", "education", "lifestyle"],
+  "lang": "en-US",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "image/logo1.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "logo.png",
+      "src": "image/logo1.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "image/hom.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "image/sta.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 }
