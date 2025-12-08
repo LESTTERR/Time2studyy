@@ -1,5 +1,43 @@
 import { app, auth } from "./firebase-init.js";
 
+// Retry utility function with exponential backoff
+async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
+  let lastError;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+
+      // Check if it's quota exhaustion (limit: 0) - don't retry these
+      if (error.message.includes('limit: 0') || error.message.includes('quota exceeded')) {
+        console.warn('Quota exhausted, not retrying:', error.message);
+        throw error;
+      }
+
+      // Check if it's a rate limit error (429) - retry with exponential backoff
+      if (error.status === 429 || error.message.includes('429') || error.message.includes('Too Many Requests')) {
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt); // Exponential backoff
+          console.warn(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+
+      // For other errors, don't retry
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+// Rate limiting: Track last request time to prevent hitting API limits
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 5000; // 5 seconds between requests (increased for exhausted quota)
+
 // Try to initialize AI, but gracefully handle if AI service is not available
 let model = null;
 let aiEnabled = false;
@@ -20,9 +58,23 @@ export async function generateGeminiResponse(prompt) {
   if (!aiEnabled || !model) {
     throw new Error('AI service not available');
   }
-  
+
+  // Rate limiting: Check if enough time has passed since last request
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    console.log(`Rate limiting: waiting ${waitTime}ms before making request`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+
+  // Update last request time
+  lastRequestTime = Date.now();
+
   try {
-    const result = await model.generateContent(prompt);
+    const result = await retryWithBackoff(async () => {
+      return await model.generateContent(prompt);
+    });
     return result.response.text();
   } catch (error) {
     console.error('Error generating Gemini response:', error);
@@ -69,6 +121,14 @@ async function sendMessage() {
   // Disable input while processing
   input.disabled = true;
   sendBtn.disabled = true;
+  
+  // Show rate limiting status if needed
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    addMessage('bot', `⏳ Rate limiting active. Please wait ${Math.ceil(waitTime/1000)} second(s)...`);
+  }
   
   // Route to appropriate AI service
   await sendMessageToAI(text);
@@ -138,17 +198,24 @@ async function sendMessageToGemini(message) {
   }
 
   try {
-    const result = await model.generateContent(message);
-    const response = await result.response;
-    const text = response.text();
+    // Use the existing generateGeminiResponse function which includes retry logic
+    const response = await generateGeminiResponse(message);
 
     // Remove loading indicator and show AI response
     messages.removeChild(messages.lastChild);
-    addMessage('bot', text);
+    addMessage('bot', response);
   } catch (err) {
     // Error handling
     messages.removeChild(messages.lastChild);
-    addMessage('bot', 'Error connecting to Gemini AI.');
+    
+    // Provide specific error messages based on error type
+    if (err.message.includes('quota') || err.message.includes('exceeded') || err.message.includes('limit: 0')) {
+      addMessage('bot', '⚠️ Free tier quota exhausted for Gemini AI. Please wait ~1 minute or upgrade your plan. You can still use "bot" commands for basic tasks.');
+    } else if (err.message.includes('429') || err.message.includes('Too Many Requests')) {
+      addMessage('bot', 'Too many requests. Please wait a moment before sending another message.');
+    } else {
+      addMessage('bot', 'Error connecting to Gemini AI. Please try again later.');
+    }
   }
 }
 
