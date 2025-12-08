@@ -91,7 +91,7 @@ class NotificationManager {
   async registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/Time2studyy/js/service-worker.js');
+        const registration = await navigator.serviceWorker.register('/js/service-worker.js');
         console.log('[NM] Service worker registered:', registration);
 
         // Wait for the service worker to be ready
@@ -348,11 +348,11 @@ class NotificationManager {
 
     const options = {
       body: body,
-      icon: '/Time2studyy/image/logo1.png',
-      badge: '/Time2studyy/image/logo1.png',
+      icon: '/image/logo1.png',
+      badge: '/image/logo1.png',
       vibrate: [200, 100, 200],
       data: {
-        url: '/Time2studyy/html/home.html',
+        url: '/html/home.html',
         type: type,
         itemId: data.id
       },
@@ -392,14 +392,14 @@ class NotificationManager {
     };
   }
 
-  // Test notification (for debugging)
-  async testNotification() {
-    await this.showNotification('test', {
-      id: 'test',
-      name: 'Test Notification',
-      startTime: new Date().toLocaleTimeString()
-    });
-  }
+  // Test notification (for debugging) - REMOVED
+  // async testNotification() {
+  //   await this.showNotification('test', {
+  //     id: 'test',
+  //     name: 'Test Notification',
+  //     startTime: new Date().toLocaleTimeString()
+  //   });
+  // }
 
   // Manual trigger for reminder check (for testing)
   async triggerReminderCheck() {

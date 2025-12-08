@@ -6,35 +6,35 @@ const SCHEDULE_CACHE = 'time2study-schedule-v1.1.0';
 // Files to cache immediately
 const STATIC_ASSETS = [
   '/',
-  '/Time2studyy/index.html',
-  '/Time2studyy/html/home.html',
-  '/Time2studyy/html/login.html',
-  '/Time2studyy/html/register.html',
-  '/Time2studyy/html/profile.html',
-  '/Time2studyy/html/add-class.html',
-  '/Time2studyy/html/add-task.html',
-  '/Time2studyy/css/style.css',
-  '/Time2studyy/css/task.css',
-  '/Time2studyy/css/tasks.css',
-  '/Time2studyy/css/classes.css',
-  '/Time2studyy/css/classcard.css',
-  '/Time2studyy/css/loading.css',
-  '/Time2studyy/css/profile.css',
-  '/Time2studyy/css/login.css',
-  '/Time2studyy/css/register.css',
-  '/Time2studyy/js/manifest.json',
-  '/Time2studyy/js/script.js',
-  '/Time2studyy/js/firebase-init.js',
-  '/Time2studyy/js/chatbot.js',
-  '/Time2studyy/js/pwa-install.js',
-  '/Time2studyy/js/service-worker.js',
-  '/Time2studyy/js/notification-manager.js',
-  '/Time2studyy/image/logo1.png',
-  '/Time2studyy/image/blue.jpg',
+  '/index.html',
+  '/html/home.html',
+  '/html/login.html',
+  '/html/register.html',
+  '/html/profile.html',
+  '/html/add-class.html',
+  '/html/add-task.html',
+  '/css/style.css',
+  '/css/task.css',
+  '/css/tasks.css',
+  '/css/classes.css',
+  '/css/classcard.css',
+  '/css/loading.css',
+  '/css/profile.css',
+  '/css/login.css',
+  '/css/register.css',
+  '/js/manifest.json',
+  '/js/script.js',
+  '/js/firebase-init.js',
+  '/js/chatbot.js',
+  '/js/pwa-install.js',
+  '/js/service-worker.js',
+  '/js/notification-manager.js',
+  '/image/logo1.png',
+  '/image/blue.jpg',
   // Essential images for offline viewing
-  '/Time2studyy/image/pfp.png',
-  '/Time2studyy/image/pfp2.png',
-  '/Time2studyy/image/pfp3.png'
+  '/image/pfp.png',
+  '/image/pfp2.png',
+  '/image/pfp3.png'
 ];
 
 // Notification intervals (in minutes)
@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
                   return cachedResponse;
                 }
                 // Fallback to home page for navigation requests
-                return caches.match('/Time2studyy/index.html');
+                return caches.match('/index.html');
               });
           })
       );
@@ -126,7 +126,7 @@ self.addEventListener('fetch', (event) => {
               .catch(() => {
                 // Return offline fallback for images
                 if (request.destination === 'image') {
-                  return caches.match('/Time2studyy/image/logo1.png');
+                  return caches.match('/image/logo1.png');
                 }
               });
           })
@@ -158,8 +158,8 @@ self.addEventListener('push', (event) => {
     const data = event.data.json();
     const options = {
       body: data.body,
-      icon: '/Time2studyy/image/logo1.png',
-      badge: '/Time2studyy/image/logo1.png',
+      icon: '/image/logo1.png',
+      badge: '/image/logo1.png',
       vibrate: [200, 100, 200],
       data: data.data || {},
       actions: [
@@ -193,7 +193,7 @@ self.addEventListener('notificationclick', (event) => {
   }
 
   // Default action or 'view' action
-  const urlToOpen = event.notification.data?.url || '/Time2studyy/html/home.html';
+  const urlToOpen = event.notification.data?.url || '/html/home.html';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
@@ -351,11 +351,11 @@ async function showReminderNotification(type, data) {
 
   const options = {
     body: body,
-    icon: '/Time2studyy/image/logo1.png',
-    badge: '/Time2studyy/image/logo1.png',
+    icon: '/image/logo1.png',
+    badge: '/image/logo1.png',
     vibrate: [200, 100, 200],
     data: {
-      url: '/Time2studyy/html/home.html',
+      url: '/html/home.html',
       type: type,
       itemId: data.id
     },
