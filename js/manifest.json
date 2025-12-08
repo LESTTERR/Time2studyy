@@ -2,7 +2,7 @@
   "name": "Time2Study - Smart Study Scheduling",
   "short_name": "Time2Study",
   "description": "Organize Your Study Schedule Smarter - A comprehensive study planning app",
-  "start_url": "/Time2studyy/index.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#2196F3",

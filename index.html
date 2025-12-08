@@ -441,6 +441,7 @@ body.dark input, body.dark textarea, body.dark select {
         <div>
             <a href="html/login.html" class="cta-button">Get Started</a>
             <a href="#features" class="cta-button secondary-button">Learn More</a>
+            <button id="test-notification" class="cta-button secondary-button" style="background: #ff6b6b; color: white;">Test Notification</button>
         </div>
     </section>
 <section class="features" id="features">
@@ -639,6 +640,23 @@ body.dark input, body.dark textarea, body.dark select {
     btn.textContent = dark ? '☀️' : '🌙';
   });
 })();
+</script>
+
+<!-- Test notification script -->
+<script>
+document.getElementById('test-notification').addEventListener('click', async () => {
+  if (window.notificationManager) {
+    try {
+      await window.notificationManager.testNotification();
+      alert('Test notification sent! Check your notifications.');
+    } catch (error) {
+      console.error('Test notification failed:', error);
+      alert('Test notification failed. Check console for details.');
+    }
+  } else {
+    alert('Notification manager not loaded yet. Please wait a moment and try again.');
+  }
+});
 </script>
 </body>
 </html>
