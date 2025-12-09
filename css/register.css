@@ -122,17 +122,96 @@
       margin-bottom: 0.5rem;
     }
 
+    /* Gender selection styles */
+    .gender-label {
+      font-weight: 500;
+      color: #e6eef8;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .gender-options {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .gender-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #e6eef8;
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .gender-option input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .gender-option span {
+      font-size: 0.95rem;
+      user-select: none;
+    }
+
     @media (max-width: 480px) {
       .auth-card {
         padding: 1.5rem;
         max-width: 320px;
       }
-      
+
       .logo img {
         max-width: 120px;
       }
-      
+
       input, button {
         font-size: 16px;
+      }
+
+      /* Mobile-specific gender option adjustments */
+      .gender-options {
+        gap: 0.75rem;
+      }
+
+      .gender-option {
+        min-width: 80px;
+        font-size: 0.9rem;
+      }
+
+      .gender-option span {
+        font-size: 0.9rem;
+      }
+    }
+
+    /* iPhone XR specific adjustments (414px width) */
+    @media (max-width: 414px) and (min-width: 375px) {
+      .gender-options {
+        gap: 0.5rem;
+        justify-content: space-between;
+      }
+
+      .gender-option {
+        min-width: 70px;
+        flex: 1;
+      }
+
+      .gender-option span {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* Very small screens */
+    @media (max-width: 374px) {
+      .gender-options {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .gender-option {
+        min-width: auto;
+        width: 100%;
+        justify-content: flex-start;
       }
     }

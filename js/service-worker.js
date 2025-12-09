@@ -39,9 +39,10 @@ const STATIC_ASSETS = [
 
 // Notification intervals (in minutes)
 const NOTIFICATION_INTERVALS = {
-  CLASS_REMINDER: 5,    // 5 minutes before class
-  TASK_REMINDER: 1440,  // 24 hours before task (1440 minutes)
-  URGENT_TASK: 60       // 1 hour before urgent tasks
+  CLASS_REMINDER_5MIN: 5,    // 5 minutes before class
+  CLASS_REMINDER_30MIN: 30,  // 30 minutes before class
+  TASK_REMINDER: 1440,       // 24 hours before task (1440 minutes)
+  URGENT_TASK: 60           // 1 hour before urgent tasks
 };
 
 self.addEventListener('install', (event) => {
@@ -155,30 +156,41 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push received:', event);
 
   if (event.data) {
-    const data = event.data.json();
-    const options = {
-      body: data.body,
-      icon: '/image/logo1.png',
-      badge: '/image/logo1.png',
-      vibrate: [200, 100, 200],
-      data: data.data || {},
-      actions: [
-        {
-          action: 'view',
-          title: 'View Details'
-        },
-        {
-          action: 'dismiss',
-          title: 'Dismiss'
-        }
-      ],
-      requireInteraction: true,
-      silent: false
-    };
+    try {
+      const data = event.data.json();
+      const options = {
+        body: data.body,
+        icon: '/image/logo1.png',
+        badge: '/image/logo1.png',
+        vibrate: [200, 100, 200],
+        data: data.data || {},
+        actions: [
+          {
+            action: 'view',
+            title: 'View Details'
+          },
+          {
+            action: 'dismiss',
+            title: 'Dismiss'
+          }
+        ],
+        requireInteraction: true,
+        silent: false
+      };
 
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
+      event.waitUntil(
+        self.registration.showNotification(data.title, options)
+      );
+    } catch (error) {
+      console.error('[SW] Error processing push notification:', error);
+      // Fallback for OneSignal notifications
+      event.waitUntil(
+        self.registration.showNotification('New Notification', {
+          body: 'You have a new notification',
+          icon: '/image/logo1.png'
+        })
+      );
+    }
   }
 });
 
@@ -253,12 +265,15 @@ async function checkUpcomingReminders() {
     // Check classes
     if (scheduleData.classes) {
       scheduleData.classes.forEach(classItem => {
-        const reminderTime = calculateReminderTime(classItem, 'class', now);
-        if (reminderTime && reminderTime > now) {
-          reminders.push({
-            type: 'class',
-            data: classItem,
-            reminderTime: reminderTime
+        const classReminders = calculateReminderTime(classItem, 'class', now);
+        if (classReminders) {
+          classReminders.forEach(reminderInfo => {
+            reminders.push({
+              type: 'class',
+              data: classItem,
+              reminderTime: reminderInfo.reminderTime,
+              intervalType: reminderInfo.intervalType
+            });
           });
         }
       });
@@ -267,12 +282,15 @@ async function checkUpcomingReminders() {
     // Check tasks
     if (scheduleData.tasks) {
       scheduleData.tasks.forEach(task => {
-        const reminderTime = calculateReminderTime(task, 'task', now);
-        if (reminderTime && reminderTime > now) {
-          reminders.push({
-            type: 'task',
-            data: task,
-            reminderTime: reminderTime
+        const taskReminders = calculateReminderTime(task, 'task', now);
+        if (taskReminders) {
+          taskReminders.forEach(reminderInfo => {
+            reminders.push({
+              type: 'task',
+              data: task,
+              reminderTime: reminderInfo.reminderTime,
+              intervalType: reminderInfo.intervalType
+            });
           });
         }
       });
@@ -315,21 +333,49 @@ function calculateReminderTime(item, type, now) {
     return null; // Event is in the past
   }
 
-  // Calculate reminder time based on type
-  const minutesBefore = type === 'class' ? NOTIFICATION_INTERVALS.CLASS_REMINDER : NOTIFICATION_INTERVALS.TASK_REMINDER;
-  const reminderTime = new Date(eventTime.getTime() - (minutesBefore * 60 * 1000));
+  // For classes, return both 30-minute and 5-minute reminders
+  if (type === 'class') {
+    const reminders = [];
 
-  // Only return if reminder is in the future and within reasonable time
-  if (reminderTime > now && reminderTime <= new Date(now.getTime() + (24 * 60 * 60 * 1000))) {
-    return reminderTime;
+    // 30 minutes before reminder
+    const reminder30MinTime = new Date(eventTime.getTime() - (NOTIFICATION_INTERVALS.CLASS_REMINDER_30MIN * 60 * 1000));
+    if (reminder30MinTime > now && reminder30MinTime <= new Date(now.getTime() + (24 * 60 * 60 * 1000))) {
+      reminders.push({
+        reminderTime: reminder30MinTime,
+        intervalType: '30min'
+      });
+    }
+
+    // 5 minutes before reminder
+    const reminder5MinTime = new Date(eventTime.getTime() - (NOTIFICATION_INTERVALS.CLASS_REMINDER_5MIN * 60 * 1000));
+    if (reminder5MinTime > now && reminder5MinTime <= new Date(now.getTime() + (24 * 60 * 60 * 1000))) {
+      reminders.push({
+        reminderTime: reminder5MinTime,
+        intervalType: '5min'
+      });
+    }
+
+    return reminders.length > 0 ? reminders : null;
   }
+  // For tasks, use 24-hour reminder
+  else {
+    const reminderTime = new Date(eventTime.getTime() - (NOTIFICATION_INTERVALS.TASK_REMINDER * 60 * 1000));
 
-  return null;
+    // Only return if reminder is in the future and within reasonable time
+    if (reminderTime > now && reminderTime <= new Date(now.getTime() + (24 * 60 * 60 * 1000))) {
+      return [{
+        reminderTime: reminderTime,
+        intervalType: '24hour'
+      }];
+    }
+
+    return null;
+  }
 }
 
 // Schedule a notification
 async function scheduleNotification(reminder) {
-  const { type, data, reminderTime } = reminder;
+  const { type, data, reminderTime, intervalType } = reminder;
 
   // For now, we'll use a simple timeout approach
   // In production, you'd want to use a more robust scheduling system
@@ -337,17 +383,27 @@ async function scheduleNotification(reminder) {
 
   if (delay > 0 && delay < (24 * 60 * 60 * 1000)) { // Within 24 hours
     setTimeout(async () => {
-      await showReminderNotification(type, data);
+      await showReminderNotification(type, data, intervalType);
     }, delay);
   }
 }
 
 // Show reminder notification
-async function showReminderNotification(type, data) {
-  const title = type === 'class' ? `Class Reminder: ${data.name}` : `Task Due Soon: ${data.name}`;
-  const body = type === 'class'
-    ? `Your ${data.name} class starts in ${NOTIFICATION_INTERVALS.CLASS_REMINDER} minutes at ${data.startTime}`
-    : `Your task "${data.name}" is due ${data.dueDate?.toDate ? data.dueDate.toDate().toLocaleDateString() : new Date(data.dueDate).toLocaleDateString()}`;
+async function showReminderNotification(type, data, intervalType) {
+  let title, body;
+
+  if (type === 'class') {
+    if (intervalType === '30min') {
+      title = `Class Reminder: ${data.name} (30 minutes)`;
+      body = `Your ${data.name} class starts in 30 minutes at ${data.startTime}`;
+    } else {
+      title = `Class Reminder: ${data.name} (5 minutes)`;
+      body = `Your ${data.name} class starts in 5 minutes at ${data.startTime}`;
+    }
+  } else {
+    title = `Task Due Soon: ${data.name}`;
+    body = `Your task "${data.name}" is due ${data.dueDate?.toDate ? data.dueDate.toDate().toLocaleDateString() : new Date(data.dueDate).toLocaleDateString()}`;
+  }
 
   const options = {
     body: body,
@@ -357,7 +413,8 @@ async function showReminderNotification(type, data) {
     data: {
       url: '/html/home.html',
       type: type,
-      itemId: data.id
+      itemId: data.id,
+      intervalType: intervalType
     },
     actions: [
       {
@@ -370,7 +427,7 @@ async function showReminderNotification(type, data) {
       }
     ],
     requireInteraction: true,
-    tag: `${type}-${data.id}`, // Prevents duplicate notifications
+    tag: `${type}-${data.id}-${intervalType}`, // Prevents duplicate notifications
     silent: false
   };
 

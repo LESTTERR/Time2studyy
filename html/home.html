@@ -160,6 +160,84 @@
 
 
   </style>
+  <!-- OneSignal SDK with fallback handling -->
+  <script>
+    // OneSignal loading with error handling and fallback
+    function loadOneSignalWithFallback() {
+      // Set timeout for OneSignal loading
+      const onesignalTimeout = setTimeout(() => {
+        console.warn('OneSignal loading timeout - likely blocked by browser extension');
+        setupFallbackNotifications();
+      }, 5000);
+
+      // Try to load OneSignal
+      const script = document.createElement('script');
+      script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+      script.defer = true;
+
+      script.onload = function() {
+        clearTimeout(onesignalTimeout);
+        console.log('OneSignal SDK loaded successfully');
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          try {
+            await OneSignal.init({
+              appId: "ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+            });
+            console.log('OneSignal initialized successfully');
+            window.notificationSystem = 'onesignal';
+          } catch (error) {
+            console.error('OneSignal initialization failed:', error);
+            setupFallbackNotifications();
+          }
+        });
+      };
+
+      script.onerror = function() {
+        clearTimeout(onesignalTimeout);
+        console.error('OneSignal SDK failed to load - likely blocked by browser extension');
+        setupFallbackNotifications();
+      };
+
+      document.head.appendChild(script);
+    }
+
+    function setupFallbackNotifications() {
+      console.log('Setting up fallback notification system');
+      window.notificationSystem = 'fallback';
+
+      // Check if browser supports notifications
+      if ('Notification' in window) {
+        // Request permission for fallback notifications
+        function requestNotificationPermission() {
+          if (Notification.permission === 'default') {
+            Notification.requestPermission().then(function(permission) {
+              if (permission === 'granted') {
+                console.log('Fallback notification permission granted');
+              }
+            });
+          }
+        }
+
+        // Request permission after a delay to avoid being too aggressive
+        setTimeout(requestNotificationPermission, 3000);
+      }
+
+      // Store fallback notification function
+      window.showFallbackNotification = function(title, options) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          return new Notification(title, options);
+        } else {
+          console.log('Fallback notification not shown - permission not granted');
+          return null;
+        }
+      };
+    }
+
+    // Start loading OneSignal when page loads
+    document.addEventListener('DOMContentLoaded', loadOneSignalWithFallback);
+  </script>
 </head>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -194,7 +272,7 @@
     <!-- HOME SECTION: Calendar + Schedule + Tasks layout -->
     <div class="content-section active" id="homeSection">
       <!-- Main page with responsive wrapper for desktop/mobile layout -->
-      <div class="main-page" style="padding: 1rem;">
+      <div class="main-page" style="padding: 0.2rem;">
         <div class="responsive-wrapper">
           
           <!-- ═══════════════════════════════════════════ -->
@@ -1610,14 +1688,22 @@ async function loadStatistics(user) {
         return bDate - aDate; // Most recent first
       }).slice(0, 5);
 
-      // Update motivational message and activity
-      updateMotivationalContent(completedTasks, totalTasks, recentTasks);
+      // Collect recent classes (last 5 by creation date)
+      const allClasses = classSnap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      const recentClasses = allClasses.sort((a, b) => {
+        const aDate = a.createdAt ? new Date(a.createdAt) : new Date();
+        const bDate = b.createdAt ? new Date(b.createdAt) : new Date();
+        return bDate - aDate; // Most recent first
+      }).slice(0, 5);
+
+      // Update motivational message and activity with both tasks and classes
+      updateMotivationalContent(completedTasks, totalTasks, recentTasks, recentClasses);
 
     });
   });
 }
 
-function updateMotivationalContent(completed, total, recentTasks = []) {
+function updateMotivationalContent(completed, total, recentTasks = [], recentClasses = []) {
   const quoteEl = document.getElementById('dailyQuote');
   const activityListEl = document.getElementById('activityList');
 
@@ -1636,19 +1722,56 @@ function updateMotivationalContent(completed, total, recentTasks = []) {
 
   // Update activity list
   activityListEl.innerHTML = '';
-  const recentActivities = recentTasks.slice(0, 5); // Last 5
+
+  // Combine and sort all recent activities (both tasks and classes)
+  const allActivities = [];
+
+  // Add tasks to activities
+  recentTasks.forEach(task => {
+    allActivities.push({
+      type: 'task',
+      data: task,
+      timestamp: task.createdAt ? new Date(task.createdAt) : new Date()
+    });
+  });
+
+  // Add classes to activities
+  recentClasses.forEach(cls => {
+    allActivities.push({
+      type: 'class',
+      data: cls,
+      timestamp: cls.createdAt ? new Date(cls.createdAt) : new Date()
+    });
+  });
+
+  // Sort by timestamp (newest first)
+  allActivities.sort((a, b) => b.timestamp - a.timestamp);
+
+  const recentActivities = allActivities.slice(0, 5); // Last 5
+
   if (recentActivities.length === 0) {
     activityListEl.innerHTML = '<p style="text-align: center; color: var(--subtext);">No recent activity</p>';
   } else {
-    recentActivities.forEach(task => {
+    recentActivities.forEach(activity => {
       const activityItem = document.createElement('div');
       activityItem.className = 'activity-item';
-      const action = task.completed ? 'Completed' : 'Added';
-      const icon = task.completed ? '✅' : '➕';
-      activityItem.innerHTML = `
-        <div>${icon} ${action} ${task.type || 'Task'}: ${task.name}</div>
-        <div class="activity-time">${new Date(task.dueDate?.toDate ? task.dueDate.toDate() : task.dueDate).toLocaleDateString()}</div>
-      `;
+
+      if (activity.type === 'task') {
+        const task = activity.data;
+        const action = task.completed ? 'Completed' : 'Added';
+        const icon = task.completed ? '✅' : '➕';
+        activityItem.innerHTML = `
+          <div>${icon} ${action} ${task.type || 'Task'}: ${task.name}</div>
+          <div class="activity-time">${activity.timestamp.toLocaleDateString()}</div>
+        `;
+      } else if (activity.type === 'class') {
+        const cls = activity.data;
+        activityItem.innerHTML = `
+          <div>📚 Added Class: ${cls.name}</div>
+          <div class="activity-time">${activity.timestamp.toLocaleDateString()}</div>
+        `;
+      }
+
       activityListEl.appendChild(activityItem);
     });
   }

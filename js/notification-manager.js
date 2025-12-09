@@ -19,11 +19,22 @@ const VAPID_PUBLIC_KEY = 'BPdZwe5jrlOlUjwkysE6X_e93rZ5mxrz_V1ctO6xMPSfDPu0ybzbmT
   }
 })();
 
+// Notification intervals (in minutes)
+const NOTIFICATION_INTERVALS = {
+  CLASS_REMINDER_5MIN: 5,    // 5 minutes before class
+  CLASS_REMINDER_30MIN: 30,  // 30 minutes before class
+  TASK_REMINDER: 1440,       // 24 hours before task (1440 minutes)
+  URGENT_TASK: 60           // 1 hour before urgent tasks
+};
 class NotificationManager {
   constructor() {
+    // Check for Safari-specific limitations
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    this.isSafari = isSafari;
     this.subscription = null;
     this.scheduleDB = null;
+    this.safariCheckInterval = null;
     this.init();
   }
 
@@ -51,6 +62,9 @@ class NotificationManager {
 
       // Start periodic reminder checking
       this.startPeriodicChecks();
+
+      // Setup Safari-specific notifications if needed
+      await this.checkSafariNotifications();
 
       console.log('[NM] Notification manager initialized');
     } catch (error) {
@@ -118,8 +132,8 @@ class NotificationManager {
       this.subscription = subscription;
       console.log('[NM] Push subscription created:', subscription);
 
-      // Store FCM token in user profile
-      await this.storeFCMToken(subscription);
+      // Note: FCM token storage removed since we're using OneSignal
+      // OneSignal handles its own subscription management
 
     } catch (error) {
       console.error('[NM] Push subscription setup failed:', error);
@@ -132,16 +146,25 @@ class NotificationManager {
 
       // Check if periodic sync is supported
       if ('periodicSync' in registration) {
-        // Register for periodic sync every 15 minutes
-        await registration.periodicSync.register('reminder-check', {
-          minInterval: 15 * 60 * 1000 // 15 minutes
-        });
-        console.log('[NM] Periodic sync registered');
+        try {
+          // Register for periodic sync every 15 minutes
+          await registration.periodicSync.register('reminder-check', {
+            minInterval: 15 * 60 * 1000 // 15 minutes
+          });
+          console.log('[NM] Periodic sync registered');
+        } catch (syncError) {
+          // Permission denied is expected in some browsers
+          if (syncError.name === 'NotAllowedError') {
+            console.log('[NM] Periodic sync permission denied (expected in some browsers)');
+          } else {
+            console.error('[NM] Periodic sync registration failed:', syncError);
+          }
+        }
       } else {
         console.log('[NM] Periodic sync not supported, using fallback');
       }
     } catch (error) {
-      console.error('[NM] Periodic sync registration failed:', error);
+      console.error('[NM] Periodic sync setup failed:', error);
     }
   }
 
@@ -270,10 +293,16 @@ class NotificationManager {
   findUpcomingReminders(classes, tasks, now) {
     const reminders = [];
 
-    // Check classes (5 minutes before)
+    // Check classes (30 minutes and 5 minutes before)
     classes.forEach(classItem => {
-      const reminder = this.calculateClassReminder(classItem, now);
-      if (reminder) reminders.push(reminder);
+      const classReminders = this.calculateClassReminder(classItem, now);
+      if (classReminders) {
+        if (Array.isArray(classReminders)) {
+          reminders.push(...classReminders);
+        } else {
+          reminders.push(classReminders);
+        }
+      }
     });
 
     // Check tasks (24 hours before)
@@ -296,15 +325,32 @@ class NotificationManager {
       const classTime = new Date(now);
       classTime.setHours(hours, minutes, 0, 0);
 
-      const reminderTime = new Date(classTime.getTime() - (5 * 60 * 1000)); // 5 minutes before
+      // Create reminders for both 30 minutes and 5 minutes before class
+      const reminders = [];
 
-      if (reminderTime > now && reminderTime <= new Date(now.getTime() + (60 * 60 * 1000))) { // Within next hour
-        return {
+      // 30 minutes before reminder
+      const reminder30MinTime = new Date(classTime.getTime() - (NOTIFICATION_INTERVALS.CLASS_REMINDER_30MIN * 60 * 1000));
+      if (reminder30MinTime > now && reminder30MinTime <= new Date(now.getTime() + (24 * 60 * 60 * 1000))) {
+        reminders.push({
           type: 'class',
           data: classItem,
-          reminderTime: reminderTime
-        };
+          reminderTime: reminder30MinTime,
+          intervalType: '30min'
+        });
       }
+
+      // 5 minutes before reminder
+      const reminder5MinTime = new Date(classTime.getTime() - (NOTIFICATION_INTERVALS.CLASS_REMINDER_5MIN * 60 * 1000));
+      if (reminder5MinTime > now && reminder5MinTime <= new Date(now.getTime() + (24 * 60 * 60 * 1000))) {
+        reminders.push({
+          type: 'class',
+          data: classItem,
+          reminderTime: reminder5MinTime,
+          intervalType: '5min'
+        });
+      }
+
+      return reminders.length > 0 ? reminders : null;
     }
 
     return null;
@@ -326,44 +372,76 @@ class NotificationManager {
   }
 
   async scheduleReminder(reminder) {
-    const { type, data, reminderTime } = reminder;
+    const { type, data, reminderTime, intervalType } = reminder;
 
     try {
-      if (!window.auth?.currentUser || !db) return;
+      // Use OneSignal for push notifications if available
+      if (window.OneSignal && typeof OneSignal.Notifications !== 'undefined') {
+        try {
+          // Determine notification message based on type and interval
+          let title, body;
+          if (type === 'class') {
+            if (intervalType === '30min') {
+              title = `Class Reminder: ${data.name} (30 minutes)`;
+              body = `Your ${data.name} class starts in 30 minutes at ${data.startTime}`;
+            } else {
+              title = `Class Starting Soon: ${data.name}`;
+              body = `Your ${data.name} class starts in 5 minutes at ${data.startTime}`;
+            }
+          } else {
+            title = `Task Due Tomorrow: ${data.name}`;
+            body = `Don't forget: "${data.name}" is due tomorrow`;
+          }
 
-      const userId = window.auth.currentUser.uid;
+          // Schedule notification with OneSignal
+          const scheduledDate = new Date(reminderTime);
+          await OneSignal.Notifications.schedule({
+            title: title,
+            body: body,
+            scheduledAt: scheduledDate,
+            data: {
+              type: type,
+              itemId: data.id,
+              intervalType: intervalType
+            }
+          });
 
-      // Get FCM token from user profile
-      const userRef = collection(db, "users").doc(userId);
-      const userDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", userId)));
-      let fcmToken = null;
-
-      userDoc.forEach(doc => {
-        fcmToken = doc.data().fcmToken;
-      });
-
-      if (!fcmToken) {
-        console.warn('[NM] No FCM token found for user, cannot schedule notification');
-        return;
+          console.log('[NM] OneSignal notification scheduled for:', reminderTime.toISOString(), 'Type:', intervalType);
+        } catch (onesignalError) {
+          console.error('[NM] OneSignal scheduling failed, falling back:', onesignalError);
+          // Continue to fallback
+          window.OneSignal = null; // Force fallback
+        }
       }
 
-      // Store notification in Firestore for cloud function to pick up
-      const notificationData = {
-        userId: userId,
-        token: fcmToken,
-        title: type === 'class' ? `Class Starting Soon: ${data.name}` : `Task Due Tomorrow: ${data.name}`,
-        body: type === 'class'
-          ? `Your ${data.name} class starts in 5 minutes at ${data.startTime}`
-          : `Don't forget: "${data.name}" is due tomorrow`,
-        scheduledAt: reminderTime.getTime(),
-        sent: false,
-        type: type,
-        itemId: data.id,
-        createdAt: Date.now()
-      };
+      // Fallback to basic notification if OneSignal failed or unavailable
+      if (!window.OneSignal || typeof OneSignal.Notifications === 'undefined') {
+        console.warn('[NM] Using basic notification fallback');
 
-      await collection(db, "scheduledNotifications").add(notificationData);
-      console.log('[NM] Notification scheduled for:', reminderTime.toISOString());
+        // For Safari, also show immediate notification if app is open and reminder is soon
+        if (this.isSafari && type === 'class') {
+          const now = new Date();
+          const timeUntilReminder = reminderTime.getTime() - now.getTime();
+
+          // If reminder is within the next minute, show it immediately
+          if (timeUntilReminder > 0 && timeUntilReminder <= 60000) {
+            this.showSafariNotification(type, data, intervalType);
+          }
+        }
+
+        // Use basic notification scheduling
+        if (Notification.permission === 'granted') {
+          const now = new Date();
+          const timeUntilReminder = reminderTime.getTime() - now.getTime();
+
+          if (timeUntilReminder > 0) {
+            setTimeout(() => {
+              this.showNotification(type, data);
+            }, timeUntilReminder);
+            console.log('[NM] Basic notification scheduled for:', reminderTime.toISOString());
+          }
+        }
+      }
 
     } catch (error) {
       console.error('[NM] Failed to schedule reminder:', error);
@@ -424,6 +502,85 @@ class NotificationManager {
     };
   }
 
+  // Safari-specific notification handling
+  async checkSafariNotifications() {
+    if (!this.isSafari) return;
+
+    try {
+      // Safari has limitations with service workers, so we'll use a simpler approach
+      // Check for reminders more frequently when app is open
+      if (this.safariCheckInterval) {
+        clearInterval(this.safariCheckInterval);
+      }
+
+      this.safariCheckInterval = setInterval(() => {
+        this.checkReminders();
+      }, 10 * 60 * 1000); // Check every 10 minutes for Safari
+
+      console.log('[NM] Safari notification check interval started');
+
+    } catch (error) {
+      console.error('[NM] Safari notification setup failed:', error);
+    }
+  }
+
+  // Show Safari-compatible notification (for when app is in foreground)
+  async showSafariNotification(type, data, intervalType) {
+    if (!this.isSafari || Notification.permission !== 'granted') return;
+
+    let title, body;
+
+    if (type === 'class') {
+      if (intervalType === '30min') {
+        title = `Class Reminder: ${data.name}`;
+        body = `Your ${data.name} class starts in 30 minutes at ${data.startTime}`;
+      } else {
+        title = `Class Starting Soon: ${data.name}`;
+        body = `Your ${data.name} class starts in 5 minutes at ${data.startTime}`;
+      }
+    } else {
+      title = `Task Due Tomorrow: ${data.name}`;
+      body = `Don't forget: "${data.name}" is due tomorrow`;
+    }
+
+    const options = {
+      body: body,
+      icon: '/image/logo1.png',
+      badge: '/image/logo1.png',
+      vibrate: [200, 100, 200],
+      data: {
+        url: '/html/home.html',
+        type: type,
+        itemId: data.id,
+        intervalType: intervalType
+      },
+      requireInteraction: true,
+      tag: `${type}-${data.id}-${intervalType}`,
+      silent: false
+    };
+
+    // Show notification
+    const notification = new Notification(title, options);
+
+    // Auto-close after 10 seconds
+    setTimeout(() => {
+      notification.close();
+    }, 10000);
+
+    // Handle clicks
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+  }
+  // Clean up Safari interval
+  cleanupSafariNotifications() {
+    if (this.safariCheckInterval) {
+      clearInterval(this.safariCheckInterval);
+      this.safariCheckInterval = null;
+    }
+  }
+
   // Test notification (for debugging) - REMOVED
   // async testNotification() {
   //   await this.showNotification('test', {
@@ -456,3 +613,122 @@ const notificationManager = new NotificationManager();
 // Export for global access
 window.NotificationManager = NotificationManager;
 window.notificationManager = notificationManager;
+
+// OneSignal fallback loading
+function loadOneSignalFallback() {
+  if (window.OneSignal) {
+    console.log('[NM] OneSignal already loaded');
+    return;
+  }
+
+  // Try to load OneSignal with timeout
+  const script = document.createElement('script');
+  script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+  script.defer = true;
+
+  script.onerror = function() {
+    console.warn('[NM] OneSignal CDN failed to load, using basic notifications');
+    showOneSignalBlockedMessage();
+    // Fallback to basic notification system
+    if (notificationManager) {
+      notificationManager.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    }
+  };
+
+  document.head.appendChild(script);
+
+  // Initialize OneSignal when available
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      await OneSignal.init({
+        appId: "ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+      });
+      console.log('[NM] OneSignal initialized successfully');
+    } catch (error) {
+      console.error('[NM] OneSignal initialization failed:', error);
+      showOneSignalBlockedMessage();
+    }
+  });
+}
+
+// Show user-friendly message when OneSignal is blocked
+function showOneSignalBlockedMessage() {
+  // Only show message if we're not in an iframe and the user is logged in
+  if (window.top !== window.self || !window.auth?.currentUser) return;
+
+  // Check if message was already shown
+  if (localStorage.getItem('onesignalBlockedMessageShown')) return;
+
+  // Mark as shown
+  localStorage.setItem('onesignalBlockedMessageShown', 'true');
+
+  // Create a nice notification element
+  const notification = document.createElement('div');
+  notification.style.position = 'fixed';
+  notification.style.bottom = '20px';
+  notification.style.right = '20px';
+  notification.style.backgroundColor = '#f5a623';
+  notification.style.color = 'white';
+  notification.style.padding = '15px 20px';
+  notification.style.borderRadius = '8px';
+  notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  notification.style.zIndex = '10000';
+  notification.style.maxWidth = '350px';
+  notification.style.fontFamily = 'Arial, sans-serif';
+  notification.style.fontSize = '14px';
+  notification.style.lineHeight = '1.4';
+
+  const title = document.createElement('div');
+  title.style.fontWeight = 'bold';
+  title.style.marginBottom = '8px';
+  title.textContent = '🔔 Notification Service';
+
+  const message = document.createElement('div');
+  message.style.marginBottom = '12px';
+  message.textContent = 'It looks like push notifications are being blocked. You can still receive basic browser notifications.';
+
+  const action = document.createElement('div');
+  action.style.fontSize = '12px';
+  action.style.opacity = '0.9';
+  action.textContent = 'This may be due to browser extensions like ad blockers.';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.style.background = 'none';
+  closeBtn.style.border = 'none';
+  closeBtn.style.color = 'white';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.fontSize = '16px';
+  closeBtn.style.position = 'absolute';
+  closeBtn.style.top = '8px';
+  closeBtn.style.right = '10px';
+  closeBtn.textContent = '×';
+  closeBtn.onclick = function() {
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  };
+
+  notification.appendChild(closeBtn);
+  notification.appendChild(title);
+  notification.appendChild(message);
+  notification.appendChild(action);
+
+  document.body.appendChild(notification);
+
+  // Auto-hide after 10 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }
+  }, 10000);
+}
+
+// Load OneSignal with delay to avoid ad blockers
+setTimeout(loadOneSignalFallback, 1000);

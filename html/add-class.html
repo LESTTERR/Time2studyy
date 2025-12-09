@@ -180,6 +180,84 @@
   </style>
 </head>
 <body>
+  <!-- OneSignal SDK with fallback handling -->
+  <script>
+    // OneSignal loading with error handling and fallback
+    function loadOneSignalWithFallback() {
+      // Set timeout for OneSignal loading
+      const onesignalTimeout = setTimeout(() => {
+        console.warn('OneSignal loading timeout - likely blocked by browser extension');
+        setupFallbackNotifications();
+      }, 5000);
+
+      // Try to load OneSignal
+      const script = document.createElement('script');
+      script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+      script.defer = true;
+
+      script.onload = function() {
+        clearTimeout(onesignalTimeout);
+        console.log('OneSignal SDK loaded successfully');
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          try {
+            await OneSignal.init({
+              appId: "ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+            });
+            console.log('OneSignal initialized successfully');
+            window.notificationSystem = 'onesignal';
+          } catch (error) {
+            console.error('OneSignal initialization failed:', error);
+            setupFallbackNotifications();
+          }
+        });
+      };
+
+      script.onerror = function() {
+        clearTimeout(onesignalTimeout);
+        console.error('OneSignal SDK failed to load - likely blocked by browser extension');
+        setupFallbackNotifications();
+      };
+
+      document.head.appendChild(script);
+    }
+
+    function setupFallbackNotifications() {
+      console.log('Setting up fallback notification system');
+      window.notificationSystem = 'fallback';
+
+      // Check if browser supports notifications
+      if ('Notification' in window) {
+        // Request permission for fallback notifications
+        function requestNotificationPermission() {
+          if (Notification.permission === 'default') {
+            Notification.requestPermission().then(function(permission) {
+              if (permission === 'granted') {
+                console.log('Fallback notification permission granted');
+              }
+            });
+          }
+        }
+
+        // Request permission after a delay to avoid being too aggressive
+        setTimeout(requestNotificationPermission, 3000);
+      }
+
+      // Store fallback notification function
+      window.showFallbackNotification = function(title, options) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          return new Notification(title, options);
+        } else {
+          console.log('Fallback notification not shown - permission not granted');
+          return null;
+        }
+      };
+    }
+
+    // Start loading OneSignal when page loads
+    document.addEventListener('DOMContentLoaded', loadOneSignalWithFallback);
+  </script>
   <div class="form-card">
     <h2>Add New Class</h2>
     <form id="classForm">
