@@ -123,11 +123,11 @@
 
 .task-item.assignment,
 .task-item.Assignment {
-  --task-color: rgb(0, 184, 95);
+  --task-color: #00b85f;
 }
 
 .task-item.project,
 .task-item.Project {
-  --task-color: rgb(255, 0, 0);
+  --task-color: #ff0000;
 }
 

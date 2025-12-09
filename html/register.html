@@ -58,7 +58,10 @@
     </form>
     <p>Already have an account? <a href="login.html">Login here</a></p>
   </div>
- 
+
+  <!-- Notification Container -->
+  <div id="alertBoxContainer" style="position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;"></div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
   import { 
@@ -68,6 +71,47 @@
     signOut 
   } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
   import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+  // Notification function
+  function showNotification(message) {
+    const container = document.getElementById('alertBoxContainer');
+    if (!container) {
+      console.error("Alert box container not found!");
+      return;
+    }
+
+    const box = document.createElement('div');
+    box.textContent = message;
+
+    box.style.cssText = `
+      background: rgba(78, 78, 78, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e6eef8;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      font-size: 0.95rem;
+      max-width: 300px;
+      animation: fadein 0.3s ease, fadeout 0.5s ease 4.5s;
+      opacity: 0;
+      margin-bottom: 10px;
+    `;
+
+    setTimeout(() => box.style.opacity = 1, 10);
+
+    setTimeout(() => {
+      box.style.opacity = 0;
+      setTimeout(() => {
+        if (container.contains(box)) {
+          container.removeChild(box);
+        }
+      }, 500);
+    }, 5000);
+
+    container.appendChild(box);
+  }
 
   const firebaseConfig = {
     apiKey: "AIzaSyDBZ7tcCJJdGCo7C8FXRiUPQ8OfOzexllc",
@@ -127,7 +171,7 @@
         createdAt: new Date()
       });
 
-      alert("Registration successful! A verification email has been sent to your inbox. Please verify before logging in.");
+      showNotification("Registration successful! A verification email has been sent to your inbox. Please verify before logging in.");
       
       // Optionally sign out after registration to force verification before login
       await signOut(auth);
@@ -136,7 +180,7 @@
       window.location.href = "login.html";
     } catch (error) {
       console.error("Error details:", error);
-      alert(`Registration failed: ${error.message}`);
+      showNotification(`Registration failed: ${error.message}`);
     }
   });
 </script>

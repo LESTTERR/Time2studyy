@@ -409,7 +409,7 @@
 
     <!-- Chatbot input section: Text input + send button -->
     <div id="chatbot-input-section">
-      <input id="userInput" type="text" placeholder="Type a message...">
+      <input id="userInput" type="text" placeholder="Type a message or use / commands (e.g., /add class)...">
       <button id="chatbot-send">
         <span class="material-icons">send</span>
       </button>
@@ -836,8 +836,8 @@ classes.forEach(d => {
              // Color code by task type: green=assignment, red=project, black=other
              const taskType = (t.type || "").toLowerCase();
              const color =
-               taskType === "assignment" ? "green" :
-               taskType === "project" ? "red" : "black";
+               taskType === "assignment" ? "#00b85f" :
+               taskType === "project" ? "#ff0000" : "#000000";
              taskDotColors.set(day, color);
            }
           });
@@ -857,6 +857,7 @@ classes.forEach(d => {
           dot.style.cssText = `
             width: 6px; height: 6px; background-color: ${color}; border-radius: 50%;
             position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
           `;
           s.style.position = 'relative';
           s.appendChild(dot);
@@ -916,6 +917,7 @@ async function loadPendingTasks(user) {
                const ti = document.createElement('div');
                const typeClass = t.type ? t.type.toLowerCase() : '';
                ti.className = `task-item ${typeClass}`;
+               ti.setAttribute('data-type', t.type || '');
 
                ti.innerHTML = `
                  <div class="task-info">
@@ -924,6 +926,15 @@ async function loadPendingTasks(user) {
                    <span class="deadline">Deadline: ${due.toLocaleDateString()}</span>
                  </div>
                `;
+
+               // Apply color based on task type
+               const taskType = (t.type || "").toLowerCase();
+               if (taskType === "assignment") {
+                 ti.style.borderLeftColor = "#00b85f";
+               } else if (taskType === "project") {
+                 ti.style.borderLeftColor = "#ff0000";
+               }
+
                pending.appendChild(ti);
              }
            } catch (error) {
@@ -988,12 +999,16 @@ const tasksList = document.getElementById("tasksList");
           minute: '2-digit'
         };
 
+        // Sanitize task type for CSS class names
+        const sanitizedType = task.type ? task.type.toLowerCase().replace(/\s+/g, '-') : '';
+
         const div = document.createElement("div");
-        div.className = `task-item ${task.type || ''}` + (task.completed ? " done" : "");
+        div.className = `task-item ${sanitizedType}` + (task.completed ? " done" : "");
+        div.setAttribute('data-type', task.type || '');
 
         div.innerHTML = `
           <div class="task-info">
-            <h4 class="${task.type ? task.type.toLowerCase() : ''}">${task.name}</h4>
+            <h4 class="${sanitizedType}">${task.name}</h4>
             <p>${task.description}</p>
             <span class="deadline">Deadline: ${dueDate.toLocaleDateString('en-US', options)}</span>
           </div>
@@ -1005,7 +1020,13 @@ const tasksList = document.getElementById("tasksList");
           </div>
         `;
 
-        div.classList.add(task.type ? task.type.toLowerCase() : '');
+        // Apply color based on task type
+        const taskType = (task.type || "").toLowerCase();
+        if (taskType === "assignment") {
+          div.style.borderLeftColor = "#00b85f";
+        } else if (taskType === "project") {
+          div.style.borderLeftColor = "#ff0000";
+        }
 
         tasksList.appendChild(div);
       });

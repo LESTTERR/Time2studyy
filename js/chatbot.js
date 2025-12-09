@@ -5,12 +5,14 @@ let model = null;
 let aiEnabled = false;
 
 try {
-  // Dynamic import to avoid loading AI if not available
-  const { getAI, getGenerativeModel, GoogleAIBackend } = await import("https://www.gstatic.com/firebasejs/12.6.0/firebase-ai.js");
-  const ai = getAI(app, { backend: new GoogleAIBackend() });
-  model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+  // Switch to official Google Generative AI SDK for Gemini Developer API
+  const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
+
+  // IMPORTANT: Replace YOUR_API_KEY with your actual API key from Google AI Studio
+  const ai = new GoogleGenerativeAI("AIzaSyB4jd_4JBT8lJsA_cttMsI8Mkpaz91dIXY");
+  model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
   aiEnabled = true;
-  console.log('AI service initialized successfully');
+  console.log('AI service initialized successfully using Gemini Developer API');
 } catch (error) {
   console.warn('AI service not available, falling back to Dialogflow only:', error.message);
 }
@@ -43,7 +45,28 @@ fab.onclick = () => {
   chatWindow.style.display = 'flex';
   fab.style.display = 'none';
   input.focus();
+  // Show welcome message if no previous messages
+  if (messages.children.length === 0) {
+    showWelcomeMessage();
+  }
 };
+
+/* Show welcome message with slash command examples */
+function showWelcomeMessage() {
+  addMessage('bot', 'Hello! I\'m your study assistant. You can use slash commands for quick actions:');
+  setTimeout(() => {
+    addMessage('bot', '• /add class - Add a new class');
+    setTimeout(() => {
+      addMessage('bot', '• /add task - Add a new task');
+      setTimeout(() => {
+        addMessage('bot', '• /help - See all available commands');
+        setTimeout(() => {
+          addMessage('bot', 'Or just chat with me naturally! 😊');
+        }, 800);
+      }, 800);
+    }, 800);
+  }, 800);
+}
 
 /* Hide chatbot window: Click close button */
 closeBtn.onclick = () => {
@@ -85,8 +108,15 @@ async function sendMessageToAI(message) {
   addMessage('bot', '...');
 
   try {
-    if (message.toLowerCase().startsWith('bot ')) {
-      // Send to Dialogflow for CRUD commands
+    if (message.startsWith('/')) {
+      // Handle help command locally
+      if (message.toLowerCase() === '/help') {
+        messages.removeChild(messages.lastChild);
+        showHelpMessage();
+        return;
+      }
+      
+      // Send other slash commands to Dialogflow for CRUD operations
       await sendMessageToDialogflow(message);
     } else {
       // Send to Gemini for general conversation, fallback to Dialogflow if AI unavailable
@@ -102,6 +132,32 @@ async function sendMessageToAI(message) {
     messages.removeChild(messages.lastChild);
     addMessage('bot', 'Error processing your message.');
   }
+}
+
+/* Show help message with available slash commands */
+function showHelpMessage() {
+  addMessage('bot', '📚 Available Slash Commands:');
+  setTimeout(() => {
+    addMessage('bot', '• /add class [name] - Add a new class');
+    setTimeout(() => {
+      addMessage('bot', '• /add task [name] - Add a new task');
+      setTimeout(() => {
+        addMessage('bot', '• /list classes - View all your classes');
+        setTimeout(() => {
+          addMessage('bot', '• /list tasks - View all your tasks');
+          setTimeout(() => {
+            addMessage('bot', '• /delete class [name] - Delete a class');
+            setTimeout(() => {
+              addMessage('bot', '• /delete task [name] - Delete a task');
+              setTimeout(() => {
+                addMessage('bot', 'You can also chat with me naturally! Just type your question or request.');
+              }, 600);
+            }, 600);
+          }, 600);
+        }, 600);
+      }, 600);
+    }, 600);
+  }, 600);
 }
 
 /* SEND TO DIALOGFLOW: Call API endpoint with user message */
@@ -133,7 +189,7 @@ async function sendMessageToGemini(message) {
   if (!aiEnabled || !model) {
     // If AI is not available, inform user and route to Dialogflow instead
     messages.removeChild(messages.lastChild);
-    addMessage('bot', 'AI service is currently unavailable. Please use "bot" prefix for commands or try again later.');
+    addMessage('bot', 'AI service is currently unavailable. Please use "/" prefix for commands (e.g., /add class) or try again later.');
     return;
   }
 

@@ -2,6 +2,9 @@
 // Import Firebase functions dynamically
 let db, collection, query, where, getDocs;
 
+// VAPID Public Key for push notifications
+const VAPID_PUBLIC_KEY = 'BPdZwe5jrlOlUjwkysE6X_e93rZ5mxrz_V1ctO6xMPSfDPu0ybzbmTCBCvI7aHmcPyZHlarp4XXHyejgSRk0R1w';
+
 (async () => {
   try {
     const firebaseModule = await import('./firebase-init.js');
@@ -107,18 +110,19 @@ class NotificationManager {
   async subscribeToPush() {
     try {
       const registration = await navigator.serviceWorker.ready;
-      this.subscription = await registration.pushManager.subscribe({
+      const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array('YOUR_PUBLIC_VAPID_KEY') // You'll need to generate this
+        applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
 
-      console.log('[NM] Push subscription created:', this.subscription);
+      this.subscription = subscription;
+      console.log('[NM] Push subscription created:', subscription);
 
-      // Send subscription to your server for push notifications
-      // await this.sendSubscriptionToServer(this.subscription);
+      // Store FCM token in user profile
+      await this.storeFCMToken(subscription);
 
     } catch (error) {
-      console.error('[NM] Push subscription failed:', error);
+      console.error('[NM] Push subscription setup failed:', error);
     }
   }
 
@@ -324,17 +328,45 @@ class NotificationManager {
   async scheduleReminder(reminder) {
     const { type, data, reminderTime } = reminder;
 
-    // For immediate testing, show notification right away
-    // In production, you'd schedule it properly
-    const delay = reminderTime.getTime() - Date.now();
+    try {
+      if (!window.auth?.currentUser || !db) return;
 
-    if (delay <= 0) {
-      // Show immediately for testing
-      await this.showNotification(type, data);
-    } else if (delay < (60 * 60 * 1000)) { // Within next hour
-      setTimeout(async () => {
-        await this.showNotification(type, data);
-      }, delay);
+      const userId = window.auth.currentUser.uid;
+
+      // Get FCM token from user profile
+      const userRef = collection(db, "users").doc(userId);
+      const userDoc = await getDocs(query(collection(db, "users"), where("__name__", "==", userId)));
+      let fcmToken = null;
+
+      userDoc.forEach(doc => {
+        fcmToken = doc.data().fcmToken;
+      });
+
+      if (!fcmToken) {
+        console.warn('[NM] No FCM token found for user, cannot schedule notification');
+        return;
+      }
+
+      // Store notification in Firestore for cloud function to pick up
+      const notificationData = {
+        userId: userId,
+        token: fcmToken,
+        title: type === 'class' ? `Class Starting Soon: ${data.name}` : `Task Due Tomorrow: ${data.name}`,
+        body: type === 'class'
+          ? `Your ${data.name} class starts in 5 minutes at ${data.startTime}`
+          : `Don't forget: "${data.name}" is due tomorrow`,
+        scheduledAt: reminderTime.getTime(),
+        sent: false,
+        type: type,
+        itemId: data.id,
+        createdAt: Date.now()
+      };
+
+      await collection(db, "scheduledNotifications").add(notificationData);
+      console.log('[NM] Notification scheduled for:', reminderTime.toISOString());
+
+    } catch (error) {
+      console.error('[NM] Failed to schedule reminder:', error);
     }
   }
 
