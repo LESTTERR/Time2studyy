@@ -1435,6 +1435,46 @@ button:focus-visible {
   flex-shrink: 0;
 }
 
+/* ========== Mobile Chatbot Fixes ========== */
+/* Prevent zoom on input focus for mobile devices */
+@media (max-width: 768px) {
+  #userInput {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  /* Ensure chatbot window stays properly positioned when keyboard appears */
+  #chatbot-window {
+    transition: bottom 0.3s ease;
+    position: fixed;
+  }
+
+  /* Mobile keyboard handling */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Prevent double tap zoom */
+  * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  /* Input field specific fixes */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+    touch-action: auto;
+  }
+}
+
 @media (min-width: 768px) {
   .fab-header {
     width: 44px;

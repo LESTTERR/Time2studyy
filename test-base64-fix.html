@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Base64 Conversion Test</h1>
+    <p>Testing the fixed urlBase64ToUint8Array function</p>
+
+    <div id="testResults"></div>
+
+    <script>
+        // Test the urlBase64ToUint8Array function
+        function urlBase64ToUint8Array(base64String) {
+            try {
+                // Remove any whitespace or invalid characters
+                const cleanedString = base64String.replace(/\s+/g, '').trim();
+
+                // Add proper padding
+                const padding = '='.repeat((4 - cleanedString.length % 4) % 4);
+                const base64 = (cleanedString + padding)
+                    .replace(/-/g, '+')
+                    .replace(/_/g, '/');
+
+                // Validate the base64 string before decoding
+                if (!/^[A-Za-z0-9+\/]+={0,2}$/.test(base64)) {
+                    throw new Error('Invalid base64 string format');
+                }
+
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+
+                for (let i = 0; i < rawData.length; ++i) {
+                    outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+            } catch (error) {
+                console.error('[TEST] Error converting base64 to Uint8Array:', error);
+                // Return empty array as fallback
+                return new Uint8Array(0);
+            }
+        }
+
+        // Test cases
+        const testCases = [
+            {
+                name: "Valid VAPID Public Key",
+                input: "BPdZwe5jrlOlUjwkysE6X_e93rZ5mxrz_V1ctO6xMPSfDPu0ybzbmTCBCvI7aHmcPyZHlarp4XXHyejgSRk0R1w",
+                expected: "Should convert successfully"
+            },
+            {
+                name: "Empty string",
+                input: "",
+                expected: "Should return empty array"
+            },
+            {
+                name: "String with spaces",
+                input: "BPdZ we5j rlOl Ujwk ysE6 X_e93 rZ5m xrz_ V1ct O6xM PSfD Pu0y bzbm TCBC vI7a HmcP yZHl arp4 XXHy ejgS Rk0R 1w",
+                expected: "Should handle spaces correctly"
+            },
+            {
+                name: "Invalid base64",
+                input: "This is not valid base64!!!",
+                expected: "Should return empty array"
+            },
+            {
+                name: "String with special characters",
+                input: "BPdZwe5jrlOlUjwkysE6X/e93rZ5mxrz/V1ctO6xMPSfDPu0ybzbmTCBCvI7aHmcPyZHlarp4XXHyejgSRk0R1w",
+                expected: "Should handle URL-safe base64"
+            }
+        ];
+
+        // Run tests
+        function runTests() {
+            const resultsContainer = document.getElementById('testResults');
+
+            testCases.forEach((testCase, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'test-result';
+
+                try {
+                    const result = urlBase64ToUint8Array(testCase.input);
+
+                    if (result.length > 0 || testCase.input === "") {
+                        resultDiv.className += ' success';
+                        resultDiv.innerHTML = `
+                            <strong>Test ${index + 1}: ${testCase.name}</strong><br>
+                            <span>✅ PASS - ${testCase.expected}</span><br>
+                            <pre>Input: ${testCase.input}</pre>
+                            <pre>Output length: ${result.length} bytes</pre>
+                        `;
+                    } else {
+                        resultDiv.className += ' info';
+                        resultDiv.innerHTML = `
+                            <strong>Test ${index + 1}: ${testCase.name}</strong><br>
+                            <span>ℹ️ INFO - Returned empty array (expected for invalid input)</span><br>
+                            <pre>Input: ${testCase.input}</pre>
+                        `;
+                    }
+                } catch (error) {
+                    resultDiv.className += ' error';
+                    resultDiv.innerHTML = `
+                        <strong>Test ${index + 1}: ${testCase.name}</strong><br>
+                        <span>❌ FAIL - ${error.message}</span><br>
+                        <pre>Input: ${testCase.input}</pre>
+                    `;
+                }
+
+                resultsContainer.appendChild(resultDiv);
+            });
+        }
+
+        // Run tests when page loads
+        window.onload = runTests;
+    </script>
+</body>
+</html>

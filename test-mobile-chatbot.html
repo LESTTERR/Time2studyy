@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Chatbot Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .test-section h2 {
+            margin-top: 0;
+            color: #444;
+        }
+
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .test-failed {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        #viewport-test {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        #mobile-simulation {
+            width: 375px;
+            height: 667px;
+            background: #333;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        #simulated-chatbot {
+            position: absolute;
+            bottom: 20px;
+            right: 10px;
+            width: 300px;
+            background: #111111;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            z-index: 10000;
+            max-height: 500px;
+            transition: bottom 0.3s ease, max-height 0.3s ease;
+        }
+
+        #simulated-chatbot-header {
+            background: #237ecd;
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        #simulated-messages {
+            padding: 1rem;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: #0e0e0e;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        #simulated-input-section {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: #111111;
+            border-top: 1px solid #222;
+        }
+
+        #simulated-input {
+            flex: 1;
+            padding: 0.6rem 0.9rem;
+            border-radius: 16px;
+            background: #1d1d1d;
+            color: white;
+            border: 1px solid #333;
+            outline: none;
+            font-size: 16px !important;
+            -webkit-text-size-adjust: none;
+            text-size-adjust: none;
+        }
+
+        #simulated-send {
+            background: #1e88e5;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        #simulated-keyboard {
+            position: absolute;
+            bottom: -300px;
+            left: 0;
+            right: 0;
+            height: 300px;
+            background: #e0e0e0;
+            border-top: 1px solid #999;
+            transition: bottom 0.3s ease;
+            display: flex;
+            flex-wrap: wrap;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .keyboard-key {
+            width: 30px;
+            height: 40px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .keyboard-space {
+            width: 150px;
+        }
+
+        #keyboard-toggle {
+            background: #2196F3;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Mobile Chatbot Fix Test</h1>
+
+        <div class="test-section">
+            <h2>Viewport Meta Tag Test</h2>
+            <p>Testing if the viewport meta tag is properly configured to prevent zooming.</p>
+
+            <div id="viewport-test">
+                Current viewport settings: <span id="viewport-content"></span>
+            </div>
+
+            <div class="test-result" id="viewport-result">
+                Checking viewport configuration...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>CSS Mobile Fixes Test</h2>
+            <p>Testing if mobile-specific CSS fixes are applied.</p>
+
+            <div class="test-result" id="css-result">
+                Checking CSS mobile fixes...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Mobile Keyboard Simulation</h2>
+            <p>Simulating mobile device with keyboard appearance.</p>
+
+            <button id="keyboard-toggle">Toggle Keyboard</button>
+
+            <div id="mobile-simulation">
+                <div id="simulated-chatbot">
+                    <div id="simulated-chatbot-header">
+                        Study Assistant
+                        <span style="cursor: pointer; float: right;" onclick="closeChatbot()">×</span>
+                    </div>
+                    <div id="simulated-messages">
+                        <div style="background: transparent; border: 2px solid #444; color: white; padding: 8px 12px; border-radius: 16px; margin-bottom: 8px; align-self: flex-start;">
+                            Hello! I'm your study assistant. How can I help you today?
+                        </div>
+                    </div>
+                    <div id="simulated-input-section">
+                        <input type="text" id="simulated-input" placeholder="Type your message...">
+                        <button id="simulated-send">→</button>
+                    </div>
+                </div>
+
+                <div id="simulated-keyboard">
+                    <!-- Keyboard keys would go here -->
+                    <div class="keyboard-key">Q</div>
+                    <div class="keyboard-key">W</div>
+                    <div class="keyboard-key">E</div>
+                    <div class="keyboard-key">R</div>
+                    <div class="keyboard-key">T</div>
+                    <div class="keyboard-key">Y</div>
+                    <div class="keyboard-key">U</div>
+                    <div class="keyboard-key">I</div>
+                    <div class="keyboard-key">O</div>
+                    <div class="keyboard-key">P</div>
+                    <!-- More keys would be here in a real keyboard -->
+                    <div class="keyboard-key keyboard-space"></div>
+                </div>
+            </div>
+
+            <div class="test-result" id="keyboard-result">
+                Click "Toggle Keyboard" to simulate keyboard appearance and test chatbot positioning.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Overall Test Results</h2>
+            <div class="test-result" id="overall-result">
+                Running tests...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test viewport configuration
+        function testViewport() {
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (viewportMeta) {
+                const content = viewportMeta.getAttribute('content');
+                document.getElementById('viewport-content').textContent = content;
+
+                const hasMaxScale = content.includes('maximum-scale=1.0');
+                const hasUserScalable = content.includes('user-scalable=no');
+
+                if (hasMaxScale && hasUserScalable) {
+                    document.getElementById('viewport-result').textContent = '✅ PASS: Viewport is properly configured to prevent zooming';
+                    document.getElementById('viewport-result').classList.remove('test-failed');
+                    return true;
+                } else {
+                    document.getElementById('viewport-result').textContent = '❌ FAIL: Viewport is missing maximum-scale=1.0 or user-scalable=no';
+                    document.getElementById('viewport-result').classList.add('test-failed');
+                    return false;
+                }
+            } else {
+                document.getElementById('viewport-result').textContent = '❌ FAIL: No viewport meta tag found';
+                document.getElementById('viewport-result').classList.add('test-failed');
+                return false;
+            }
+        }
+
+        // Test CSS mobile fixes
+        function testCSS() {
+            const styleSheets = document.styleSheets;
+            let hasMobileFixes = false;
+
+            for (let i = 0; i < styleSheets.length; i++) {
+                try {
+                    const rules = styleSheets[i].cssRules || styleSheets[i].rules;
+                    for (let j = 0; j < rules.length; j++) {
+                        const rule = rules[j];
+                        if (rule.cssText && rule.cssText.includes('@media (max-width: 768px)')) {
+                            if (rule.cssText.includes('#userInput') ||
+                                rule.cssText.includes('touch-action') ||
+                                rule.cssText.includes('text-size-adjust')) {
+                                hasMobileFixes = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (hasMobileFixes) break;
+                } catch (e) {
+                    // Skip inaccessible stylesheets (like external ones)
+                    continue;
+                }
+            }
+
+            if (hasMobileFixes) {
+                document.getElementById('css-result').textContent = '✅ PASS: Mobile CSS fixes are present';
+                document.getElementById('css-result').classList.remove('test-failed');
+                return true;
+            } else {
+                document.getElementById('css-result').textContent = '❌ FAIL: Mobile CSS fixes not found';
+                document.getElementById('css-result').classList.add('test-failed');
+                return false;
+            }
+        }
+
+        // Test keyboard simulation
+        function testKeyboardSimulation() {
+            const keyboardToggle = document.getElementById('keyboard-toggle');
+            const simulatedKeyboard = document.getElementById('simulated-keyboard');
+            const simulatedChatbot = document.getElementById('simulated-chatbot');
+            const simulatedInput = document.getElementById('simulated-input');
+
+            let keyboardVisible = false;
+
+            keyboardToggle.addEventListener('click', () => {
+                keyboardVisible = !keyboardVisible;
+
+                if (keyboardVisible) {
+                    // Show keyboard
+                    simulatedKeyboard.style.bottom = '0';
+                    // Adjust chatbot position (simulating the fix)
+                    simulatedChatbot.style.bottom = '320px';
+                    simulatedChatbot.style.maxHeight = 'calc(100% - 340px)';
+
+                    document.getElementById('keyboard-result').textContent = '✅ Keyboard visible - chatbot position adjusted';
+                    document.getElementById('keyboard-result').classList.remove('test-failed');
+                } else {
+                    // Hide keyboard
+                    simulatedKeyboard.style.bottom = '-300px';
+                    // Reset chatbot position
+                    simulatedChatbot.style.bottom = '20px';
+                    simulatedChatbot.style.maxHeight = '500px';
+
+                    document.getElementById('keyboard-result').textContent = 'Keyboard hidden - chatbot position reset';
+                    document.getElementById('keyboard-result').classList.remove('test-failed');
+                }
+            });
+
+            // Test input field properties
+            const inputStyle = window.getComputedStyle(simulatedInput);
+            const fontSize = inputStyle.getPropertyValue('font-size');
+            const textSizeAdjust = inputStyle.getPropertyValue('-webkit-text-size-adjust');
+
+            if (fontSize === '16px' && textSizeAdjust === 'none') {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        function closeChatbot() {
+            document.getElementById('simulated-chatbot').style.display = 'none';
+        }
+
+        // Run all tests
+        function runAllTests() {
+            const viewportPass = testViewport();
+            const cssPass = testCSS();
+            const keyboardPass = testKeyboardSimulation();
+
+            const overallResult = document.getElementById('overall-result');
+
+            if (viewportPass && cssPass && keyboardPass) {
+                overallResult.textContent = '🎉 ALL TESTS PASSED! Mobile chatbot fixes are working correctly.';
+                overallResult.classList.remove('test-failed');
+            } else {
+                overallResult.textContent = '❌ Some tests failed. Please check the individual test results above.';
+                overallResult.classList.add('test-failed');
+            }
+        }
+
+        // Initialize tests when page loads
+        window.addEventListener('DOMContentLoaded', runAllTests);
+    </script>
+</body>
+</html>

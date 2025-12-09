@@ -160,14 +160,20 @@
 
 
   </style>
-  <!-- OneSignal SDK with fallback handling -->
+  <!-- OneSignal SDK with enhanced fallback handling and notification manager integration -->
   <script>
-    // OneSignal loading with error handling and fallback
+    // Enhanced OneSignal loading with notification manager integration
     function loadOneSignalWithFallback() {
+      // Check if notification manager is available and already handling notifications
+      if (window.notificationManager) {
+        console.log('Notification manager already active, skipping OneSignal setup');
+        return;
+      }
+
       // Set timeout for OneSignal loading
       const onesignalTimeout = setTimeout(() => {
         console.warn('OneSignal loading timeout - likely blocked by browser extension');
-        setupFallbackNotifications();
+        setupEnhancedFallbackNotifications();
       }, 5000);
 
       // Try to load OneSignal
@@ -184,12 +190,41 @@
           try {
             await OneSignal.init({
               appId: "ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+              safari_web_id: "web.onesignal.auto.ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+              allowLocalhostAsSecureOrigin: true,
+              notifyButton: {
+                enable: true,
+                position: 'bottom-right',
+                size: 'medium',
+                theme: 'default',
+                offset: {
+                  bottom: '20px',
+                  right: '20px'
+                }
+              },
+              promptOptions: {
+                actionMessage: "Get reminders for your classes and tasks even when the app is closed.",
+                acceptButtonText: "ALLOW NOTIFICATIONS",
+                cancelButtonText: "NO THANKS"
+              }
             });
-            console.log('OneSignal initialized successfully');
+            console.log('OneSignal initialized successfully with enhanced configuration');
             window.notificationSystem = 'onesignal';
+
+            // Set up OneSignal event handlers
+            OneSignal.Notifications.addEventListener('click', (event) => {
+              console.log('OneSignal notification clicked:', event);
+              if (event.notification && event.notification.data) {
+                const data = event.notification.data;
+                if (data.url) {
+                  window.location.href = data.url;
+                }
+              }
+            });
+
           } catch (error) {
             console.error('OneSignal initialization failed:', error);
-            setupFallbackNotifications();
+            setupEnhancedFallbackNotifications();
           }
         });
       };
@@ -197,14 +232,16 @@
       script.onerror = function() {
         clearTimeout(onesignalTimeout);
         console.error('OneSignal SDK failed to load - likely blocked by browser extension');
-        setupFallbackNotifications();
+        setupEnhancedFallbackNotifications();
       };
 
       document.head.appendChild(script);
     }
 
-    function setupFallbackNotifications() {
-      console.log('Setting up fallback notification system');
+    function setupEnhancedFallbackNotifications() {
+      console.log('Setting up enhanced fallback notification system');
+
+      // Mark that we're using fallback system
       window.notificationSystem = 'fallback';
 
       // Check if browser supports notifications
@@ -215,24 +252,49 @@
             Notification.requestPermission().then(function(permission) {
               if (permission === 'granted') {
                 console.log('Fallback notification permission granted');
+              } else {
+                console.log('Fallback notification permission denied');
               }
             });
+          } else if (Notification.permission === 'granted') {
+            console.log('Fallback notification permission already granted');
           }
         }
 
         // Request permission after a delay to avoid being too aggressive
-        setTimeout(requestNotificationPermission, 3000);
+        setTimeout(requestNotificationPermission, 2000);
       }
 
-      // Store fallback notification function
+      // Enhanced fallback notification function
       window.showFallbackNotification = function(title, options) {
         if ('Notification' in window && Notification.permission === 'granted') {
-          return new Notification(title, options);
+          try {
+            const notification = new Notification(title, options);
+
+            // Auto-close after 10 seconds if not clicked
+            setTimeout(() => {
+              notification.close();
+            }, 10000);
+
+            return notification;
+          } catch (error) {
+            console.error('Error showing fallback notification:', error);
+            return null;
+          }
         } else {
           console.log('Fallback notification not shown - permission not granted');
           return null;
         }
       };
+
+      // If notification manager becomes available later, integrate with it
+      const checkNotificationManagerInterval = setInterval(() => {
+        if (window.notificationManager) {
+          clearInterval(checkNotificationManagerInterval);
+          console.log('Notification manager now available, integrating with fallback system');
+          // The notification manager will handle its own scheduling
+        }
+      }, 1000);
     }
 
     // Start loading OneSignal when page loads

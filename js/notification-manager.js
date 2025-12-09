@@ -1,9 +1,9 @@
-// Notification Manager for PWA
-// Import Firebase functions dynamically
-let db, collection, query, where, getDocs;
+// OneSignal-Centric Notification Manager for PWA
+// This manager focuses exclusively on OneSignal for cross-browser compatibility
+// including Safari and iOS devices
 
-// VAPID Public Key for push notifications
-const VAPID_PUBLIC_KEY = 'BPdZwe5jrlOlUjwkysE6X_e93rZ5mxrz_V1ctO6xMPSfDPu0ybzbmTCBCvI7aHmcPyZHlarp4XXHyejgSRk0R1w';
+// Import Firebase functions only for data storage (not for push notifications)
+let db, collection, query, where, getDocs;
 
 (async () => {
   try {
@@ -26,27 +26,21 @@ const NOTIFICATION_INTERVALS = {
   TASK_REMINDER: 1440,       // 24 hours before task (1440 minutes)
   URGENT_TASK: 60           // 1 hour before urgent tasks
 };
+
 class NotificationManager {
   constructor() {
     // Check for Safari-specific limitations
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     this.isSafari = isSafari;
     this.isIOS = isIOS;
     this.isSafariIOS = isSafari && isIOS;
-    this.subscription = null;
     this.scheduleDB = null;
     this.safariCheckInterval = null;
     this.init();
   }
 
   async init() {
-    if (!this.isSupported) {
-      console.log('[NM] Push notifications not supported');
-      return;
-    }
-
     try {
       // Initialize IndexedDB for schedule storage
       await this.initScheduleDB();
@@ -54,27 +48,13 @@ class NotificationManager {
       // Request notification permission
       await this.requestPermission();
 
-      // For Safari iOS, skip service worker registration as it's not reliable
-      if (!this.isSafariIOS) {
-        // Register service worker if not already registered
-        await this.registerServiceWorker();
-
-        // Get push subscription
-        await this.subscribeToPush();
-
-        // Register for periodic sync if supported
-        await this.registerPeriodicSync();
-      } else {
-        console.log('[NM] Safari iOS detected - using simplified notification approach');
-      }
+      // Setup Safari-specific notifications if needed
+      await this.checkSafariNotifications();
 
       // Start periodic reminder checking
       this.startPeriodicChecks();
 
-      // Setup Safari-specific notifications if needed
-      await this.checkSafariNotifications();
-
-      console.log('[NM] Notification manager initialized');
+      console.log('[NM] OneSignal-centric notification manager initialized');
     } catch (error) {
       console.error('[NM] Initialization error:', error);
     }
@@ -111,85 +91,6 @@ class NotificationManager {
       return false;
     }
     return true;
-  }
-
-  async registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('/js/service-worker.js');
-        console.log('[NM] Service worker registered:', registration);
-
-        // Wait for the service worker to be ready
-        await navigator.serviceWorker.ready;
-
-        return registration;
-      } catch (error) {
-        console.error('[NM] Service worker registration failed:', error);
-      }
-    }
-  }
-
-  async subscribeToPush() {
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-
-      this.subscription = subscription;
-      console.log('[NM] Push subscription created:', subscription);
-
-      // Note: FCM token storage removed since we're using OneSignal
-      // OneSignal handles its own subscription management
-
-    } catch (error) {
-      console.error('[NM] Push subscription setup failed:', error);
-    }
-  }
-
-  async registerPeriodicSync() {
-    try {
-      const registration = await navigator.serviceWorker.ready;
-
-      // Check if periodic sync is supported
-      if ('periodicSync' in registration) {
-        try {
-          // Register for periodic sync every 15 minutes
-          await registration.periodicSync.register('reminder-check', {
-            minInterval: 15 * 60 * 1000 // 15 minutes
-          });
-          console.log('[NM] Periodic sync registered');
-        } catch (syncError) {
-          // Permission denied is expected in some browsers
-          if (syncError.name === 'NotAllowedError') {
-            console.log('[NM] Periodic sync permission denied (expected in some browsers)');
-          } else {
-            console.error('[NM] Periodic sync registration failed:', syncError);
-          }
-        }
-      } else {
-        console.log('[NM] Periodic sync not supported, using fallback');
-      }
-    } catch (error) {
-      console.error('[NM] Periodic sync setup failed:', error);
-    }
-  }
-
-  // Convert VAPID key
-  urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
   }
 
   // Store schedule data for offline access
@@ -773,13 +674,14 @@ class NotificationManager {
     await this.checkReminders();
   }
 
-  // Get notification status
+  // Get notification status (OneSignal-focused)
   getStatus() {
     return {
-      supported: this.isSupported,
       permission: Notification.permission,
-      subscription: !!this.subscription,
-      serviceWorker: !!navigator.serviceWorker.controller
+      system: window.notificationSystem || 'not-initialized',
+      oneSignalAvailable: !!window.OneSignal,
+      safariMode: this.isSafari,
+      safariIOSMode: this.isSafariIOS
     };
   }
 }
