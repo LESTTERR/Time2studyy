@@ -69,9 +69,15 @@ button:focus-visible {
 .content-section {
   display: none;
   width: 100%;
-  height: auto;
-  overflow-y: auto;
-  
+  height: calc(100vh - 80px); /* Full viewport height minus tab bar */
+  overflow-y: scroll;
+  padding-bottom: 20px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.content-section::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .content-section.active {
@@ -99,6 +105,7 @@ button:focus-visible {
   flex-wrap: wrap;
   align-items: flex-start;
   width: 100%;
+  overflow: hidden;
 }
 
 .calendar-card,
@@ -876,7 +883,7 @@ button:focus-visible {
   margin: 0.5rem;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 100px);
+  height: calc(100vh - 120px); /* Full viewport height minus tab bar and padding */
   overflow: hidden;
 }
 
@@ -906,20 +913,34 @@ button:focus-visible {
 
 .full-task-card .task-list {
   flex: 1;
-  overflow-y: auto;
-  padding: 0;
+  overflow-y: scroll;
+  padding: 0 1rem;
+  margin: 0.5rem 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.full-task-card .task-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .full-class-card .class-list {
   flex: 1;
-  overflow-y: auto;
-  padding: 0;
+  overflow-y: scroll;
+  padding: 0 1rem;
+  margin: 0.5rem 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.full-class-card .class-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 #tasksSection .task-item,
 #classesSection .class-item {
   background: rgb(42, 43, 45);
-  padding: 1rem;
+  padding: 0.5rem;
   border-bottom: 1px solid #171717;
   display: flex;
   flex-direction: column;

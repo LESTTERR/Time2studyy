@@ -7,15 +7,42 @@ let db, collection, query, where, getDocs;
 
 (async () => {
   try {
-    const firebaseModule = await import('./firebase-init.js');
+    console.log('[NM] Starting Firebase initialization...');
+    const startTime = Date.now();
+
+    // Import Firebase modules with timeout
+    const firebaseModule = await Promise.race([
+      import('./firebase-init.js'),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Firebase module import timeout')), 5000)
+      )
+    ]);
+
+    const firestoreModule = await Promise.race([
+      import('https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js'),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Firestore module import timeout')), 5000)
+      )
+    ]);
+
     db = firebaseModule.db;
-    const firestoreModule = await import('https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js');
     collection = firestoreModule.collection;
     query = firestoreModule.query;
     where = firestoreModule.where;
     getDocs = firestoreModule.getDocs;
+
+    const initTime = Date.now() - startTime;
+    console.log(`[NM] Firebase initialized successfully in ${initTime}ms`);
+
   } catch (error) {
-    console.warn('[NM] Firebase not available:', error);
+    console.warn('[NM] Firebase initialization failed:', error.message);
+    console.warn('[NM] Notification system will work in offline/fallback mode');
+
+    // Set up a retry mechanism
+    setTimeout(() => {
+      console.log('[NM] Attempting Firebase re-initialization...');
+      location.reload(); // Simple retry by reloading
+    }, 30000); // Try again after 30 seconds
   }
 })();
 
@@ -29,34 +56,70 @@ const NOTIFICATION_INTERVALS = {
 
 class NotificationManager {
   constructor() {
-    // Check for Safari-specific limitations
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    this.isSafari = isSafari;
-    this.isIOS = isIOS;
-    this.isSafariIOS = isSafari && isIOS;
-    this.scheduleDB = null;
-    this.safariCheckInterval = null;
+    // Check for Safari-specific limitations with better detection
+    try {
+      const userAgent = navigator.userAgent || '';
+      const platform = navigator.platform || '';
+      const maxTouchPoints = navigator.maxTouchPoints || 0;
+
+      const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(userAgent) ||
+                   (platform === 'MacIntel' && maxTouchPoints > 1) ||
+                   (platform === 'iPhone' || platform === 'iPad' || platform === 'iPod');
+
+      this.isSafari = isSafari;
+      this.isIOS = isIOS;
+      this.isSafariIOS = isSafari && isIOS;
+      this.scheduleDB = null;
+      this.safariCheckInterval = null;
+
+      console.log('[NM] Browser detection:', {
+        isSafari: this.isSafari,
+        isIOS: this.isIOS,
+        isSafariIOS: this.isSafariIOS,
+        userAgent: userAgent.substring(0, 100) + '...',
+        platform: platform
+      });
+
+    } catch (error) {
+      console.error('[NM] Browser detection failed:', error);
+      this.isSafari = false;
+      this.isIOS = false;
+      this.isSafariIOS = false;
+      this.scheduleDB = null;
+      this.safariCheckInterval = null;
+    }
+
     this.init();
   }
 
   async init() {
     try {
+      console.log('[NM] Starting notification manager initialization');
+
       // Initialize IndexedDB for schedule storage
+      console.log('[NM] Initializing IndexedDB...');
       await this.initScheduleDB();
+      console.log('[NM] IndexedDB initialized successfully');
 
       // Request notification permission
-      await this.requestPermission();
+      console.log('[NM] Requesting notification permission...');
+      const permissionGranted = await this.requestPermission();
+      console.log('[NM] Notification permission result:', permissionGranted ? 'GRANTED' : 'DENIED');
 
       // Setup Safari-specific notifications if needed
+      console.log('[NM] Checking Safari notifications setup...');
       await this.checkSafariNotifications();
 
       // Start periodic reminder checking
+      console.log('[NM] Starting periodic checks...');
       this.startPeriodicChecks();
 
-      console.log('[NM] OneSignal-centric notification manager initialized');
+      console.log('[NM] OneSignal-centric notification manager initialized successfully');
+      console.log('[NM] Current status:', this.getStatus());
     } catch (error) {
-      console.error('[NM] Initialization error:', error);
+      console.error('[NM] CRITICAL: Initialization error:', error);
+      console.error('[NM] Stack trace:', error.stack);
     }
   }
 
@@ -293,9 +356,23 @@ class NotificationManager {
       // Log the scheduling attempt
       console.log(`[NM] Scheduling ${type} reminder for ${reminderTime.toISOString()} (in ${Math.round(timeUntilReminder/1000/60)} minutes)`);
 
+      // Check if OneSignal is available and working
+      const oneSignalAvailable = !this.isSafariIOS &&
+                                window.OneSignal &&
+                                typeof OneSignal.Notifications !== 'undefined' &&
+                                !window.OneSignalFailed;
+
+      console.log(`[NM] OneSignal status: available=${oneSignalAvailable}, SafariIOS=${this.isSafariIOS}, failed=${window.OneSignalFailed}`);
+
       // Enhanced OneSignal integration with better error handling
-      if (!this.isSafariIOS && window.OneSignal && typeof OneSignal.Notifications !== 'undefined') {
+      if (oneSignalAvailable) {
         try {
+          // Verify OneSignal is properly initialized
+          if (!OneSignal.Notifications || typeof OneSignal.Notifications.schedule !== 'function') {
+            console.error('[NM] OneSignal Notifications API not available');
+            throw new Error('OneSignal Notifications API not available');
+          }
+
           // Determine notification message based on type and interval
           let title, body;
           if (type === 'class') {
@@ -315,6 +392,8 @@ class NotificationManager {
           const scheduledDate = new Date(reminderTime);
           const notificationId = `reminder-${type}-${data.id}-${intervalType}-${Date.now()}`;
 
+          console.log(`[NM] Attempting to schedule OneSignal notification: ${title}`);
+
           await OneSignal.Notifications.schedule({
             title: title,
             body: body,
@@ -331,15 +410,23 @@ class NotificationManager {
 
           console.log('[NM] OneSignal notification scheduled successfully for:', reminderTime.toISOString());
           return; // Success, no need for fallback
+
         } catch (onesignalError) {
-          console.error('[NM] OneSignal scheduling failed:', onesignalError);
+          console.error('[NM] OneSignal scheduling failed:', onesignalError.message);
+          console.error('[NM] OneSignal error details:', onesignalError);
+
           // Mark OneSignal as failed for this session
           window.OneSignalFailed = true;
+
+          // Attempt to recover by falling back to native notifications
+          console.log('[NM] Falling back to native notifications after OneSignal failure');
         }
+      } else {
+        console.log('[NM] OneSignal not available, using fallback notification system');
       }
 
       // Enhanced fallback system for Safari and when OneSignal fails
-      if (this.isSafariIOS || !window.OneSignal || typeof OneSignal.Notifications === 'undefined' || window.OneSignalFailed) {
+      if (this.isSafariIOS || !oneSignalAvailable || window.OneSignalFailed) {
         console.log('[NM] Using enhanced fallback notification system');
 
         // For immediate reminders (within 2 minutes), show them right away
@@ -375,16 +462,19 @@ class NotificationManager {
             this.showNotification(type, data);
           }, timeUntilReminder);
           console.log('[NM] Fallback notification scheduled for:', reminderTime.toISOString());
+        } else {
+          console.warn('[NM] Cannot schedule fallback notification - permission not granted');
         }
       }
 
     } catch (error) {
-      console.error('[NM] Failed to schedule reminder:', error);
+      console.error('[NM] Failed to schedule reminder:', error.message);
+      console.error('[NM] Full error:', error);
+
       // Additional error recovery
       this.handleSchedulingError(reminder, error);
     }
   }
-
   async showNotification(type, data) {
     if (Notification.permission !== 'granted') return;
 
@@ -659,14 +749,31 @@ class NotificationManager {
     }
   }
 
-  // Test notification (for debugging) - REMOVED
-  // async testNotification() {
-  //   await this.showNotification('test', {
-  //     id: 'test',
-  //     name: 'Test Notification',
-  //     startTime: new Date().toLocaleTimeString()
-  //   });
-  // }
+  // Test notification (for debugging)
+  async testNotification() {
+    console.log('[NM] Test notification requested');
+    try {
+      const testData = {
+        id: 'test-' + Date.now(),
+        name: 'Test Notification',
+        startTime: new Date().toLocaleTimeString()
+      };
+
+      if (this.isSafari) {
+        console.log('[NM] Using Safari notification method');
+        await this.showSafariNotification('test', testData, 'immediate');
+      } else {
+        console.log('[NM] Using standard notification method');
+        await this.showNotification('test', testData);
+      }
+
+      console.log('[NM] Test notification completed successfully');
+      return true;
+    } catch (error) {
+      console.error('[NM] Test notification failed:', error);
+      throw error;
+    }
+  }
 
   // Manual trigger for reminder check (for testing)
   async triggerReminderCheck() {

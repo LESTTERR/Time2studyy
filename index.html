@@ -561,7 +561,8 @@ body.dark input, body.dark textarea, body.dark select {
         <div>
             <a href="html/login.html" class="cta-button">Get Started</a>
             <a href="#features" class="cta-button secondary-button">Learn More</a>
-            <!-- Test Notification button removed -->
+            <!-- Test Notification button for debugging -->
+            <button id="test-notification" class="cta-button secondary-button" style="margin-top: 10px;">Test Notification</button>
         </div>
     </section>
 <section class="features" id="features">
@@ -764,19 +765,29 @@ body.dark input, body.dark textarea, body.dark select {
 
 <!-- Test notification script -->
 <script>
-document.getElementById('test-notification').addEventListener('click', async () => {
-  if (window.notificationManager) {
-    try {
-      await window.notificationManager.testNotification();
-      alert('Test notification sent! Check your notifications.');
-    } catch (error) {
-      console.error('Test notification failed:', error);
-      alert('Test notification failed. Check console for details.');
+console.log('[DEBUG] Attempting to find test-notification element...');
+const testNotificationBtn = document.getElementById('test-notification');
+if (testNotificationBtn) {
+  console.log('[DEBUG] Found test-notification element, adding event listener');
+  testNotificationBtn.addEventListener('click', async () => {
+    console.log('[DEBUG] Test notification button clicked');
+    if (window.notificationManager) {
+      console.log('[DEBUG] Notification manager found, attempting test notification');
+      try {
+        await window.notificationManager.testNotification();
+        alert('Test notification sent! Check your notifications.');
+      } catch (error) {
+        console.error('Test notification failed:', error);
+        alert('Test notification failed. Check console for details.');
+      }
+    } else {
+      console.warn('[DEBUG] Notification manager not loaded yet');
+      alert('Notification manager not loaded yet. Please wait a moment and try again.');
     }
-  } else {
-    alert('Notification manager not loaded yet. Please wait a moment and try again.');
-  }
-});
+  });
+} else {
+  console.error('[DEBUG] CRITICAL: test-notification element not found in DOM');
+}
 </script>
 </body>
 </html>

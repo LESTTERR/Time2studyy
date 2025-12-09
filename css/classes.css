@@ -90,6 +90,7 @@
   flex-direction: column;
   gap: 0.75rem;
   width: 100%;
+  
 }
 
 @media (min-width: 768px) {
@@ -131,6 +132,7 @@
   animation: slideIn 0.3s ease-out;
   position: relative;
   width: 100%;
+  border-left:  solid 5px var(--primary)
 }
 
 @media (min-width: 768px) {
@@ -142,16 +144,7 @@
 }
 
 /* Gradient accent on left side */
-.full-class-card .class-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--primary) 0%, #38c0ff 100%);
-  border-radius: 12px 0 0 12px;
-}
+
 
 .full-class-card .class-item:hover {
   background: linear-gradient(135deg, rgb(50, 52, 55) 0%, rgb(42, 44, 47) 100%);
