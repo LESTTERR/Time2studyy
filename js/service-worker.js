@@ -1,7 +1,10 @@
-const CACHE_NAME = 'time2study-v2.1.0';
-const STATIC_CACHE = 'time2study-static-v2.1.0';
-const DYNAMIC_CACHE = 'time2study-dynamic-v2.1.0';
-const SCHEDULE_CACHE = 'time2study-schedule-v1.1.0';
+// Import OneSignal Service Worker first
+importScripts("/OneSignalSDK-v16-ServiceWorker/OneSignalSDK-v16-ServiceWorker/OneSignalSDKWorker.js");
+
+const CACHE_NAME = 'time2study-v2.2.0';
+const STATIC_CACHE = 'time2study-static-v2.2.0';
+const DYNAMIC_CACHE = 'time2study-dynamic-v2.2.0';
+const SCHEDULE_CACHE = 'time2study-schedule-v1.2.0';
 
 // Files to cache immediately
 const STATIC_ASSETS = [
@@ -34,7 +37,9 @@ const STATIC_ASSETS = [
   // Essential images for offline viewing
   '/image/pfp.png',
   '/image/pfp2.png',
-  '/image/pfp3.png'
+  '/image/pfp3.png',
+  // OneSignal SDK files
+  '/OneSignalSDK-v16-ServiceWorker/OneSignalSDK-v16-ServiceWorker/OneSignalSDKWorker.js'
 ];
 
 // Notification intervals (in minutes)
@@ -151,9 +156,15 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Handle push notifications
+// Handle push notifications with OneSignal integration
 self.addEventListener('push', (event) => {
   console.log('[SW] Push received:', event);
+
+  // Let OneSignal handle its own push events first
+  if (event.data && event.data.text && event.data.text().includes('OneSignal')) {
+    console.log('[SW] OneSignal push event detected, letting OneSignal handle it');
+    return;
+  }
 
   if (event.data) {
     try {
@@ -163,7 +174,12 @@ self.addEventListener('push', (event) => {
         icon: '/image/logo1.png',
         badge: '/image/logo1.png',
         vibrate: [200, 100, 200],
-        data: data.data || {},
+        data: {
+          url: data.data?.url || '/html/home.html',
+          type: data.data?.type || 'general',
+          itemId: data.data?.itemId,
+          ...data.data
+        },
         actions: [
           {
             action: 'view',
@@ -175,7 +191,8 @@ self.addEventListener('push', (event) => {
           }
         ],
         requireInteraction: true,
-        silent: false
+        silent: false,
+        tag: data.data?.tag || 'time2study-notification'
       };
 
       event.waitUntil(
@@ -187,10 +204,87 @@ self.addEventListener('push', (event) => {
       event.waitUntil(
         self.registration.showNotification('New Notification', {
           body: 'You have a new notification',
-          icon: '/image/logo1.png'
+          icon: '/image/logo1.png',
+          data: {
+            url: '/html/home.html'
+          }
         })
       );
     }
+  }
+});
+
+// OneSignal-specific event handling
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification click received:', event);
+
+  // Handle OneSignal notifications
+  if (event.notification && event.notification.data && event.notification.data.onesignalData) {
+    console.log('[SW] OneSignal notification clicked');
+    // Let OneSignal handle its own notification clicks
+    return;
+  }
+
+  // Handle our custom notifications
+  event.notification.close();
+
+  if (event.action === 'dismiss') {
+    console.log('[SW] Notification dismissed');
+    return;
+  }
+
+  // Default action or 'view' action
+  const notificationData = event.notification.data || {};
+  const urlToOpen = notificationData.url || '/html/home.html';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if there's already a window/tab open
+        for (let client of windowClients) {
+          if (client.url.includes('home.html') && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If no suitable window is found, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Safari-specific: Handle fetch events more carefully
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // For Safari, be more permissive with caching to ensure offline functionality
+  if (url.origin === location.origin) {
+    // For same-origin requests, use network-first strategy but with better fallback
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Clone the response for caching
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE)
+            .then((cache) => cache.put(request, responseClone));
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              // Fallback to home page for navigation requests
+              return caches.match('/index.html');
+            });
+        })
+    );
+  } else {
+    // External requests - Network only, don't cache
+    event.respondWith(fetch(request));
   }
 });
 
@@ -512,3 +606,99 @@ async function syncAction(action) {
   // Implementation would depend on the action type
   console.log('[SW] Syncing action:', action);
 }
+
+// Safari PWA-specific enhancements
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Safari PWA: Handle OneSignal SDK requests specially
+  if (url.hostname.includes('onesignal.com')) {
+    // Allow OneSignal requests to go through without caching
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Safari PWA: More aggressive caching for better offline experience
+  if (url.origin === location.origin && request.destination === 'document') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Clone the response for caching
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE)
+            .then((cache) => cache.put(request, responseClone));
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              // Fallback to home page for navigation requests
+              return caches.match('/index.html');
+            });
+        })
+    );
+  }
+});
+
+// Safari PWA: Enhanced notification click handling
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Safari PWA Enhanced Notification click:', event);
+
+  // Close the notification
+  event.notification.close();
+
+  // Handle dismiss action
+  if (event.action === 'dismiss') {
+    console.log('[SW] Safari PWA Notification dismissed');
+    return;
+  }
+
+  // For Safari PWA, be more aggressive about focusing/opening windows
+  const urlToOpen = event.notification.data?.url || '/html/home.html';
+
+  // Try to find an existing window to focus first
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Try to find any window from our app to focus
+        for (let client of windowClients) {
+          if ('focus' in client) {
+            return client.focus();
+          }
+        }
+
+        // If no window found, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Safari PWA: Periodic reminder checking for when service workers are unreliable
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'safari-reminder-check') {
+    console.log('[SW] Safari PWA periodic reminder check');
+    event.waitUntil(
+      checkUpcomingReminders().catch(error => {
+        console.error('[SW] Safari PWA reminder check failed:', error);
+      })
+    );
+  }
+});
+
+// Safari PWA: Handle visibility changes to trigger immediate checks
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CHECK_REMINDERS_NOW') {
+    console.log('[SW] Received message to check reminders immediately');
+    event.waitUntil(
+      checkUpcomingReminders().catch(error => {
+        console.error('[SW] Immediate reminder check failed:', error);
+      })
+    );
+  }
+});

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safari PWA Notification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .header {
+            background-color: #4299e1;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .test-section {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section h3 {
+            color: #2d3748;
+            margin-top: 0;
+            border-bottom: 2px solid #4299e1;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3182ce;
+        }
+        button:disabled {
+            background-color: #cbd5e0;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d6f5d6;
+            color: #2d7a2d;
+        }
+        .error {
+            background-color: #f5d6d6;
+            color: #7a2d2d;
+        }
+        .info {
+            background-color: #d6e8f5;
+            color: #2d5a7a;
+        }
+        .warning {
+            background-color: #f5f1d6;
+            color: #7a6a2d;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .notification-preview {
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .notification-preview h4 {
+            margin-top: 0;
+            color: #2d3748;
+        }
+        .notification-preview p {
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+        .notification-preview .meta {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔔 Safari PWA Notification Test</h1>
+        <p>Test notification functionality specifically for Safari PWA on iPhone XR</p>
+    </div>
+
+    <div class="test-section">
+        <h3>📱 Device & Browser Information</h3>
+        <div class="status info" id="deviceInfo">
+            Detecting device and browser...
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔧 Notification System Status</h3>
+        <div class="status info" id="systemStatus">
+            Checking notification system...
+        </div>
+        <button id="checkStatusBtn">Refresh Status</button>
+        <button id="requestPermissionBtn">Request Notification Permission</button>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 Test Class Reminders</h3>
+        <div class="status" id="classTestStatus">Ready to test class reminders</div>
+
+        <div>
+            <label for="className">Class Name:</label>
+            <input type="text" id="className" value="Mathematics 101" placeholder="Enter class name">
+        </div>
+
+        <div>
+            <label for="classTime">Class Time:</label>
+            <input type="time" id="classTime" value="10:00">
+        </div>
+
+        <div>
+            <label for="classDay">Class Day:</label>
+            <select id="classDay">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+            </select>
+        </div>
+
+        <button id="test30MinReminder">Test 30-Minute Reminder</button>
+        <button id="test5MinReminder">Test 5-Minute Reminder</button>
+        <button id="testImmediateClass">Test Immediate Class Notification</button>
+
+        <div class="notification-preview" id="classPreview" style="display: none;">
+            <h4>Class Reminder Preview</h4>
+            <p><strong>Title:</strong> <span id="previewTitle">Class Reminder</span></p>
+            <p><strong>Body:</strong> <span id="previewBody">Your class starts soon</span></p>
+            <p class="meta">This is how the notification will appear on your iPhone XR</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Test Task Reminders</h3>
+        <div class="status" id="taskTestStatus">Ready to test task reminders</div>
+
+        <div>
+            <label for="taskName">Task Name:</label>
+            <input type="text" id="taskName" value="History Essay" placeholder="Enter task name">
+        </div>
+
+        <div>
+            <label for="taskDueDays">Due In:</label>
+            <select id="taskDueDays">
+                <option value="1">1 day</option>
+                <option value="2">2 days</option>
+                <option value="3">3 days</option>
+                <option value="7">1 week</option>
+            </select>
+        </div>
+
+        <button id="testTaskReminder">Test Task Due Reminder</button>
+        <button id="testImmediateTask">Test Immediate Task Notification</button>
+
+        <div class="notification-preview" id="taskPreview" style="display: none;">
+            <h4>Task Reminder Preview</h4>
+            <p><strong>Title:</strong> <span id="taskPreviewTitle">Task Due Soon</span></p>
+            <p><strong>Body:</strong> <span id="taskPreviewBody">Your task is due tomorrow</span></p>
+            <p class="meta">This is how the notification will appear on your iPhone XR</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔄 Advanced Testing</h3>
+        <div class="status" id="advancedStatus">Advanced testing options</div>
+
+        <button id="testPendingReminders">Check Pending Reminders</button>
+        <button id="testVisibilityChange">Simulate App Visibility Change</button>
+        <button id="testServiceWorker">Test Service Worker Registration</button>
+        <button id="clearPendingReminders">Clear Pending Reminders</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test Results</h3>
+        <div class="status" id="testResults">
+            Test results will appear here...
+        </div>
+        <button id="copyResults">Copy Results</button>
+        <button id="clearResults">Clear Results</button>
+    </div>
+
+    <script>
+        // Wait for the notification manager to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const deviceInfo = document.getElementById('deviceInfo');
+            const systemStatus = document.getElementById('systemStatus');
+            const testResults = document.getElementById('testResults');
+
+            // Device detection
+            function updateDeviceInfo() {
+                const userAgent = navigator.userAgent;
+                const platform = navigator.platform;
+                const maxTouchPoints = navigator.maxTouchPoints || 0;
+
+                const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
+                const isIOS = /iPad|iPhone|iPod/.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1);
+                const isSafariIOS = isSafari && isIOS;
+                const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
+                let info = `User Agent: ${userAgent}\n`;
+                info += `Platform: ${platform}\n`;
+                info += `Touch Points: ${maxTouchPoints}\n`;
+                info += `Browser: ${isSafari ? 'Safari' : 'Other'}\n`;
+                info += `iOS: ${isIOS}\n`;
+                info += `Safari iOS: ${isSafariIOS}\n`;
+                info += `PWA Mode: ${isPWA}\n`;
+                info += `Service Worker: ${'serviceWorker' in navigator}\n`;
+                info += `Notifications: ${'Notification' in window}\n`;
+                info += `Permission: ${Notification ? Notification.permission : 'N/A'}`;
+
+                deviceInfo.textContent = info;
+                deviceInfo.className = 'status info';
+
+                return { isSafari, isIOS, isSafariIOS, isPWA };
+            }
+
+            // Check notification system status
+            function updateSystemStatus() {
+                if (window.notificationManager) {
+                    const status = window.notificationManager.getStatus();
+                    let statusText = `Notification Manager: ✅ Loaded\n`;
+                    statusText += `Supported: ${status.supported}\n`;
+                    statusText += `Permission: ${status.permission}\n`;
+                    statusText += `Subscription: ${status.subscription}\n`;
+                    statusText += `Service Worker: ${status.serviceWorker}\n`;
+                    statusText += `System: ${window.notificationSystem || 'unknown'}\n`;
+                    statusText += `Safari Mode: ${window.notificationManager.isSafari}\n`;
+                    statusText += `iOS Mode: ${window.notificationManager.isIOS}`;
+
+                    systemStatus.textContent = statusText;
+                    systemStatus.className = status.supported ? 'status success' : 'status warning';
+                } else {
+                    systemStatus.textContent = 'Notification manager not loaded yet...';
+                    systemStatus.className = 'status warning';
+                    setTimeout(updateSystemStatus, 500);
+                }
+            }
+
+            // Check if notification manager is available
+            function checkNotificationManager() {
+                if (window.notificationManager) {
+                    return true;
+                } else {
+                    logResult('Waiting for notification manager...');
+                    setTimeout(checkNotificationManager, 500);
+                    return false;
+                }
+            }
+
+            // Log test results
+            function logResult(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const resultLine = `[${timestamp}] ${message}\n`;
+
+                testResults.textContent += resultLine;
+                testResults.className = `status ${type}`;
+                testResults.scrollTop = testResults.scrollHeight;
+            }
+
+            // Clear test results
+            document.getElementById('clearResults').addEventListener('click', function() {
+                testResults.textContent = 'Test results will appear here...';
+                testResults.className = 'status info';
+            });
+
+            // Copy test results
+            document.getElementById('copyResults').addEventListener('click', function() {
+                if (testResults.textContent !== 'Test results will appear here...') {
+                    navigator.clipboard.writeText(testResults.textContent)
+                        .then(() => {
+                            logResult('Test results copied to clipboard', 'success');
+                        })
+                        .catch(err => {
+                            logResult('Failed to copy results: ' + err, 'error');
+                        });
+                }
+            });
+
+            // Update device info and system status
+            const deviceInfoObj = updateDeviceInfo();
+            updateSystemStatus();
+
+            // Check status button
+            document.getElementById('checkStatusBtn').addEventListener('click', updateSystemStatus);
+
+            // Request permission button
+            document.getElementById('requestPermissionBtn').addEventListener('click', async function() {
+                if (window.notificationManager) {
+                    try {
+                        const result = await window.notificationManager.requestPermission();
+                        if (result) {
+                            logResult('Notification permission granted!', 'success');
+                            updateSystemStatus();
+                        } else {
+                            logResult('Notification permission denied.', 'error');
+                        }
+                    } catch (error) {
+                        logResult('Error requesting permission: ' + error.message, 'error');
+                    }
+                } else {
+                    logResult('Notification manager not ready', 'warning');
+                }
+            });
+
+            // Test 30-minute class reminder
+            document.getElementById('test30MinReminder').addEventListener('click', async function() {
+                if (!checkNotificationManager()) return;
+
+                const className = document.getElementById('className').value;
+                const classTime = document.getElementById('classTime').value;
+                const classDay = document.getElementById('classDay').value;
+
+                try {
+                    logResult(`Testing 30-minute reminder for ${className}`, 'info');
+
+                    const testClass = {
+                        id: 'test-class-30min-' + Date.now(),
+                        name: className,
+                        startTime: classTime,
+                        days: [classDay]
+                    };
+
+                    // Calculate reminder time (30 minutes from now)
+                    const now = new Date();
+                    const reminderTime = new Date(now.getTime() + (30 * 60 * 1000));
+
+                    const reminder = {
+                        type: 'class',
+                        data: testClass,
+                        reminderTime: reminderTime,
+                        intervalType: '30min'
+                    };
+
+                    await window.notificationManager.scheduleReminder(reminder);
+
+                    // Update preview
+                    document.getElementById('previewTitle').textContent = `🔔 Class Reminder: ${className} (30 minutes)`;
+                    document.getElementById('previewBody').textContent = `Your ${className} class starts in 30 minutes at ${classTime}`;
+                    document.getElementById('classPreview').style.display = 'block';
+
+                    logResult(`✅ 30-minute reminder scheduled for ${reminderTime.toLocaleTimeString()}`, 'success');
+                    logResult('Note: On Safari PWA, this will show when the app is visible or at the scheduled time', 'info');
+
+                } catch (error) {
+                    logResult('❌ Error testing 30-minute reminder: ' + error.message, 'error');
+                }
+            });
+
+            // Test 5-minute class reminder
+            document.getElementById('test5MinReminder').addEventListener('click', async function() {
+                if (!checkNotificationManager()) return;
+
+                const className = document.getElementById('className').value;
+                const classTime = document.getElementById('classTime').value;
+
+                try {
+                    logResult(`Testing 5-minute reminder for ${className}`, 'info');
+
+                    const testClass = {
+                        id: 'test-class-5min-' + Date.now(),
+                        name: className,
+                        startTime: classTime,
+                        days: [new Date().toLocaleDateString('en-US', { weekday: 'long' })]
+                    };
+
+                    // Calculate reminder time (5 minutes from now)
+                    const now = new Date();
+                    const reminderTime = new Date(now.getTime() + (5 * 60 * 1000));
+
+                    const reminder = {
+                        type: 'class',
+                        data: testClass,
+                        reminderTime: reminderTime,
+                        intervalType: '5min'
+                    };
+
+                    await window.notificationManager.scheduleReminder(reminder);
+
+                    // Update preview
+                    document.getElementById('previewTitle').textContent = `⏰ Class Starting Soon: ${className}`;
+                    document.getElementById('previewBody').textContent = `Your ${className} class starts in 5 minutes at ${classTime}`;
+                    document.getElementById('classPreview').style.display = 'block';
+
+                    logResult(`✅ 5-minute reminder scheduled for ${reminderTime.toLocaleTimeString()}`, 'success');
+                    logResult('On Safari PWA, this should show immediately since it\'s within 2 minutes', 'info');
+
+                } catch (error) {
+                    logResult('❌ Error testing 5-minute reminder: ' + error.message, 'error');
+                }
+            });
+
+            // Test immediate class notification
+            document.getElementById('testImmediateClass').addEventListener('click', async function() {
+                if (!checkNotificationManager()) return;
+
+                const className = document.getElementById('className').value;
+                const classTime = document.getElementById('classTime').value;
+
+                try {
+                    logResult(`Testing immediate class notification for ${className}`, 'info');
+
+                    const testClass = {
+                        id: 'test-class-immediate-' + Date.now(),
+                        name: className,
+                        startTime: classTime,
+                        days: [new Date().toLocaleDateString('en-US', { weekday: 'long' })]
+                    };
+
+                    if (window.notificationManager.isSafari) {
+                        window.notificationManager.showSafariNotification('class', testClass, '5min');
+                    } else {
+                        await window.notificationManager.showNotification('class', testClass);
+                    }
+
+                    logResult('✅ Immediate class notification shown', 'success');
+
+                } catch (error) {
+                    logResult('❌ Error showing immediate notification: ' + error.message, 'error');
+                }
+            });
+
+            // Test task reminder
+            document.getElementById('testTaskReminder').addEventListener('click', async function() {
+                if (!checkNotificationManager()) return;
+
+                const taskName = document.getElementById('taskName').value;
+                const dueDays = parseInt(document.getElementById('taskDueDays').value);
+
+                try {
+                    logResult(`Testing task reminder for ${taskName} (due in ${dueDays} days)`, 'info');
+
+                    const dueDate = new Date();
+                    dueDate.setDate(dueDate.getDate() + dueDays);
+
+                    const testTask = {
+                        id: 'test-task-' + Date.now(),
+                        name: taskName,
+                        dueDate: dueDate
+                    };
+
+                    // Calculate reminder time (24 hours before due date)
+                    const reminderTime = new Date(dueDate.getTime() - (24 * 60 * 60 * 1000));
+
+                    const reminder = {
+                        type: 'task',
+                        data: testTask,
+                        reminderTime: reminderTime
+                    };
+
+                    await window.notificationManager.scheduleReminder(reminder);
+
+                    // Update preview
+                    document.getElementById('taskPreviewTitle').textContent = `📅 Task Due Soon: ${taskName}`;
+                    document.getElementById('taskPreviewBody').textContent = `Your task "${taskName}" is due ${dueDate.toLocaleDateString()}`;
+                    document.getElementById('taskPreview').style.display = 'block';
+
+                    logResult(`✅ Task reminder scheduled for ${reminderTime.toLocaleTimeString()}`, 'success');
+
+                } catch (error) {
+                    logResult('❌ Error testing task reminder: ' + error.message, 'error');
+                }
+            });
+
+            // Test immediate task notification
+            document.getElementById('testImmediateTask').addEventListener('click', async function() {
+                if (!checkNotificationManager()) return;
+
+                const taskName = document.getElementById('taskName').value;
+
+                try {
+                    logResult(`Testing immediate task notification for ${taskName}`, 'info');
+
+                    const testTask = {
+                        id: 'test-task-immediate-' + Date.now(),
+                        name: taskName,
+                        dueDate: new Date(Date.now() + (24 * 60 * 60 * 1000)) // Due tomorrow
+                    };
+
+                    if (window.notificationManager.isSafari) {
+                        window.notificationManager.showSafariNotification('task', testTask);
+                    } else {
+                        await window.notificationManager.showNotification('task', testTask);
+                    }
+
+                    logResult('✅ Immediate task notification shown', 'success');
+
+                } catch (error) {
+                    logResult('❌ Error showing immediate task notification: ' + error.message, 'error');
+                }
+            });
+
+            // Test pending reminders
+            document.getElementById('testPendingReminders').addEventListener('click', async function() {
+                if (!checkNotificationManager()) return;
+
+                try {
+                    logResult('Checking for pending reminders...', 'info');
+                    await window.notificationManager.checkPendingRemindersOnVisible();
+                    logResult('✅ Pending reminders check completed', 'success');
+                } catch (error) {
+                    logResult('❌ Error checking pending reminders: ' + error.message, 'error');
+                }
+            });
+
+            // Test visibility change
+            document.getElementById('testVisibilityChange').addEventListener('click', function() {
+                logResult('Simulating app visibility change...', 'info');
+
+                // Create a mock visibility change event
+                const event = new Event('visibilitychange');
+                document.dispatchEvent(event);
+
+                logResult('✅ Visibility change simulated', 'success');
+                logResult('Note: On real Safari PWA, this would trigger when you open the app', 'info');
+            });
+
+            // Test service worker
+            document.getElementById('testServiceWorker').addEventListener('click', async function() {
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registration = await navigator.serviceWorker.getRegistration();
+                        if (registration) {
+                            logResult('✅ Service Worker registered: ' + registration.scope, 'success');
+                            logResult('Active worker: ' + (registration.active ? 'Yes' : 'No'), 'info');
+                        } else {
+                            logResult('⚠️ No service worker registration found', 'warning');
+                        }
+                    } catch (error) {
+                        logResult('❌ Error checking service worker: ' + error.message, 'error');
+                    }
+                } else {
+                    logResult('⚠️ Service Worker not supported in this browser', 'warning');
+                }
+            });
+
+            // Clear pending reminders
+            document.getElementById('clearPendingReminders').addEventListener('click', async function() {
+                if (!checkNotificationManager()) return;
+
+                try {
+                    logResult('Clearing pending reminders...', 'info');
+
+                    // This would need to be implemented in the notification manager
+                    // For now, we'll just log it
+                    logResult('⚠️ Clear pending reminders functionality not yet implemented', 'warning');
+                    logResult('Note: Pending reminders will be automatically cleared when shown', 'info');
+
+                } catch (error) {
+                    logResult('❌ Error clearing pending reminders: ' + error.message, 'error');
+                }
+            });
+
+            // Initial test results
+            logResult('Safari PWA Notification Test initialized', 'success');
+            logResult('Waiting for notification manager to load...', 'info');
+
+            // Check if we're in Safari PWA
+            if (deviceInfoObj.isSafariIOS) {
+                logResult('📱 Safari iOS PWA detected - using enhanced fallback system', 'warning');
+            } else if (deviceInfoObj.isSafari) {
+                logResult('🖥️ Safari desktop detected - using enhanced fallback system', 'warning');
+            } else {
+                logResult('🌐 Non-Safari browser detected - using standard notification system', 'info');
+            }
+        });
+    </script>
+</body>
+</html>

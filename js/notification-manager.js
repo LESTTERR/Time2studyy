@@ -30,8 +30,11 @@ class NotificationManager {
   constructor() {
     // Check for Safari-specific limitations
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     this.isSafari = isSafari;
+    this.isIOS = isIOS;
+    this.isSafariIOS = isSafari && isIOS;
     this.subscription = null;
     this.scheduleDB = null;
     this.safariCheckInterval = null;
@@ -51,14 +54,19 @@ class NotificationManager {
       // Request notification permission
       await this.requestPermission();
 
-      // Register service worker if not already registered
-      await this.registerServiceWorker();
+      // For Safari iOS, skip service worker registration as it's not reliable
+      if (!this.isSafariIOS) {
+        // Register service worker if not already registered
+        await this.registerServiceWorker();
 
-      // Get push subscription
-      await this.subscribeToPush();
+        // Get push subscription
+        await this.subscribeToPush();
 
-      // Register for periodic sync if supported
-      await this.registerPeriodicSync();
+        // Register for periodic sync if supported
+        await this.registerPeriodicSync();
+      } else {
+        console.log('[NM] Safari iOS detected - using simplified notification approach');
+      }
 
       // Start periodic reminder checking
       this.startPeriodicChecks();
@@ -208,10 +216,13 @@ class NotificationManager {
 
   // Start periodic reminder checks
   startPeriodicChecks() {
-    // Check every 5 minutes when app is open
+    // For Safari iOS, check more frequently since service workers are unreliable
+    const checkInterval = this.isSafariIOS ? 1 * 60 * 1000 : 5 * 60 * 1000; // 1 minute for Safari, 5 minutes for others
+
+    // Check every interval when app is open
     setInterval(() => {
       this.checkReminders();
-    }, 5 * 60 * 1000);
+    }, checkInterval);
 
     // Also check immediately
     this.checkReminders();
@@ -375,26 +386,34 @@ class NotificationManager {
     const { type, data, reminderTime, intervalType } = reminder;
 
     try {
-      // Use OneSignal for push notifications if available
-      if (window.OneSignal && typeof OneSignal.Notifications !== 'undefined') {
+      const now = new Date();
+      const timeUntilReminder = reminderTime.getTime() - now.getTime();
+
+      // Log the scheduling attempt
+      console.log(`[NM] Scheduling ${type} reminder for ${reminderTime.toISOString()} (in ${Math.round(timeUntilReminder/1000/60)} minutes)`);
+
+      // Enhanced OneSignal integration with better error handling
+      if (!this.isSafariIOS && window.OneSignal && typeof OneSignal.Notifications !== 'undefined') {
         try {
           // Determine notification message based on type and interval
           let title, body;
           if (type === 'class') {
             if (intervalType === '30min') {
-              title = `Class Reminder: ${data.name} (30 minutes)`;
+              title = `🔔 Class Reminder: ${data.name}`;
               body = `Your ${data.name} class starts in 30 minutes at ${data.startTime}`;
             } else {
-              title = `Class Starting Soon: ${data.name}`;
+              title = `⏰ Class Starting Soon: ${data.name}`;
               body = `Your ${data.name} class starts in 5 minutes at ${data.startTime}`;
             }
           } else {
-            title = `Task Due Tomorrow: ${data.name}`;
-            body = `Don't forget: "${data.name}" is due tomorrow`;
+            title = `📅 Task Due Soon: ${data.name}`;
+            body = `Don't forget: "${data.name}" is due ${new Date(data.dueDate).toLocaleDateString()}`;
           }
 
           // Schedule notification with OneSignal
           const scheduledDate = new Date(reminderTime);
+          const notificationId = `reminder-${type}-${data.id}-${intervalType}-${Date.now()}`;
+
           await OneSignal.Notifications.schedule({
             title: title,
             body: body,
@@ -402,49 +421,66 @@ class NotificationManager {
             data: {
               type: type,
               itemId: data.id,
-              intervalType: intervalType
-            }
+              intervalType: intervalType,
+              url: '/html/home.html',
+              notificationId: notificationId
+            },
+            tag: notificationId // Use unique tag to prevent duplicates
           });
 
-          console.log('[NM] OneSignal notification scheduled for:', reminderTime.toISOString(), 'Type:', intervalType);
+          console.log('[NM] OneSignal notification scheduled successfully for:', reminderTime.toISOString());
+          return; // Success, no need for fallback
         } catch (onesignalError) {
-          console.error('[NM] OneSignal scheduling failed, falling back:', onesignalError);
-          // Continue to fallback
-          window.OneSignal = null; // Force fallback
+          console.error('[NM] OneSignal scheduling failed:', onesignalError);
+          // Mark OneSignal as failed for this session
+          window.OneSignalFailed = true;
         }
       }
 
-      // Fallback to basic notification if OneSignal failed or unavailable
-      if (!window.OneSignal || typeof OneSignal.Notifications === 'undefined') {
-        console.warn('[NM] Using basic notification fallback');
+      // Enhanced fallback system for Safari and when OneSignal fails
+      if (this.isSafariIOS || !window.OneSignal || typeof OneSignal.Notifications === 'undefined' || window.OneSignalFailed) {
+        console.log('[NM] Using enhanced fallback notification system');
 
-        // For Safari, also show immediate notification if app is open and reminder is soon
-        if (this.isSafari && type === 'class') {
-          const now = new Date();
-          const timeUntilReminder = reminderTime.getTime() - now.getTime();
-
-          // If reminder is within the next minute, show it immediately
-          if (timeUntilReminder > 0 && timeUntilReminder <= 60000) {
+        // For immediate reminders (within 2 minutes), show them right away
+        if (timeUntilReminder > 0 && timeUntilReminder <= 120000) {
+          console.log('[NM] Immediate reminder - showing now');
+          if (this.isSafari) {
             this.showSafariNotification(type, data, intervalType);
+          } else {
+            this.showNotification(type, data);
           }
+          return;
         }
 
-        // Use basic notification scheduling
-        if (Notification.permission === 'granted') {
-          const now = new Date();
-          const timeUntilReminder = reminderTime.getTime() - now.getTime();
+        // For Safari PWA, use more reliable scheduling with visibility checks
+        if (this.isSafari) {
+          console.log('[NM] Safari PWA scheduling - will check when app is visible');
 
+          // Store the reminder for when app becomes visible
+          await this.storePendingReminder(reminder);
+
+          // Also set a timeout as backup
           if (timeUntilReminder > 0) {
             setTimeout(() => {
-              this.showNotification(type, data);
+              this.checkAndShowReminder(reminder);
             }, timeUntilReminder);
-            console.log('[NM] Basic notification scheduled for:', reminderTime.toISOString());
           }
+          return;
+        }
+
+        // Standard fallback for other browsers
+        if (Notification.permission === 'granted' && timeUntilReminder > 0) {
+          setTimeout(() => {
+            this.showNotification(type, data);
+          }, timeUntilReminder);
+          console.log('[NM] Fallback notification scheduled for:', reminderTime.toISOString());
         }
       }
 
     } catch (error) {
       console.error('[NM] Failed to schedule reminder:', error);
+      // Additional error recovery
+      this.handleSchedulingError(reminder, error);
     }
   }
 
@@ -513,11 +549,26 @@ class NotificationManager {
         clearInterval(this.safariCheckInterval);
       }
 
+      // For Safari iOS, use more aggressive checking since service workers are unreliable
+      const safariInterval = this.isSafariIOS ? 1 * 60 * 1000 : 5 * 60 * 1000; // 1 minute for Safari iOS, 5 minutes for desktop Safari
+
       this.safariCheckInterval = setInterval(() => {
         this.checkReminders();
-      }, 10 * 60 * 1000); // Check every 10 minutes for Safari
+      }, safariInterval);
 
       console.log('[NM] Safari notification check interval started');
+
+      // For Safari, add visibility change listener to check when app comes to foreground
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          console.log('[NM] App became visible, checking reminders and pending notifications');
+          this.checkReminders();
+          this.checkPendingRemindersOnVisible();
+        }
+      });
+
+      // Also check for any existing pending reminders
+      await this.checkPendingRemindersOnVisible();
 
     } catch (error) {
       console.error('[NM] Safari notification setup failed:', error);
@@ -581,6 +632,132 @@ class NotificationManager {
     }
   }
 
+  // Store pending reminders for Safari PWA
+  async storePendingReminder(reminder) {
+    if (!this.scheduleDB) {
+      console.warn('[NM] Schedule DB not available for storing pending reminders');
+      return;
+    }
+
+    try {
+      const pendingReminder = {
+        id: `pending-${reminder.type}-${reminder.data.id}-${reminder.intervalType || 'default'}`,
+        reminder: reminder,
+        createdAt: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      const transaction = this.scheduleDB.transaction(['schedule'], 'readwrite');
+      const store = transaction.objectStore('schedule');
+      await store.put(pendingReminder);
+      console.log('[NM] Pending reminder stored for later delivery');
+    } catch (error) {
+      console.error('[NM] Failed to store pending reminder:', error);
+    }
+  }
+
+  // Check and show reminder if it's time
+  async checkAndShowReminder(reminder) {
+    try {
+      const now = new Date();
+      const timeUntilReminder = reminder.reminderTime.getTime() - now.getTime();
+
+      // If it's time to show the reminder (within 1 minute window)
+      if (Math.abs(timeUntilReminder) <= 60000) {
+        console.log('[NM] It\'s time to show the scheduled reminder');
+        if (this.isSafari) {
+          this.showSafariNotification(reminder.type, reminder.data, reminder.intervalType);
+        } else {
+          this.showNotification(reminder.type, reminder.data);
+        }
+
+        // Remove the pending reminder if it exists
+        await this.removePendingReminder(reminder);
+      }
+    } catch (error) {
+      console.error('[NM] Error checking pending reminder:', error);
+    }
+  }
+
+  // Remove pending reminder after it's been shown
+  async removePendingReminder(reminder) {
+    if (!this.scheduleDB) return;
+
+    try {
+      const pendingReminderId = `pending-${reminder.type}-${reminder.data.id}-${reminder.intervalType || 'default'}`;
+      const transaction = this.scheduleDB.transaction(['schedule'], 'readwrite');
+      const store = transaction.objectStore('schedule');
+      await store.delete(pendingReminderId);
+      console.log('[NM] Pending reminder removed after delivery');
+    } catch (error) {
+      console.error('[NM] Failed to remove pending reminder:', error);
+    }
+  }
+
+  // Handle scheduling errors with recovery attempts
+  async handleSchedulingError(reminder, error) {
+    console.error('[NM] Scheduling error recovery:', error);
+
+    // For critical reminders (within next hour), try alternative methods
+    const now = new Date();
+    const timeUntilReminder = reminder.reminderTime.getTime() - now.getTime();
+
+    if (timeUntilReminder > 0 && timeUntilReminder <= 3600000) { // Within 1 hour
+      console.log('[NM] Critical reminder - attempting recovery');
+
+      // Try to show immediately if it's very soon
+      if (timeUntilReminder <= 300000) { // Within 5 minutes
+        setTimeout(() => {
+          this.showNotification(reminder.type, reminder.data);
+        }, 10000); // Try again in 10 seconds
+      }
+
+      // Store for visibility-based delivery
+      if (this.isSafari) {
+        await this.storePendingReminder(reminder);
+      }
+    }
+  }
+
+  // Check for any pending reminders when app becomes visible
+  async checkPendingRemindersOnVisible() {
+    if (!this.scheduleDB) return;
+
+    try {
+      const transaction = this.scheduleDB.transaction(['schedule'], 'readonly');
+      const store = transaction.objectStore('schedule');
+      const request = store.getAll();
+
+      const results = await new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+
+      const pendingReminders = results.filter(item => item.id.startsWith('pending-'));
+      const now = new Date();
+
+      for (const pendingItem of pendingReminders) {
+        const reminder = pendingItem.reminder;
+        const timeUntilReminder = new Date(reminder.reminderTime).getTime() - now.getTime();
+
+        // Show reminders that are due or overdue
+        if (timeUntilReminder <= 0) {
+          console.log('[NM] Showing overdue pending reminder');
+          if (this.isSafari) {
+            this.showSafariNotification(reminder.type, reminder.data, reminder.intervalType);
+          } else {
+            this.showNotification(reminder.type, reminder.data);
+          }
+          await this.removePendingReminder(reminder);
+        }
+      }
+
+      console.log('[NM] Pending reminders check completed');
+    } catch (error) {
+      console.error('[NM] Error checking pending reminders:', error);
+    }
+  }
+
   // Test notification (for debugging) - REMOVED
   // async testNotification() {
   //   await this.showNotification('test', {
@@ -614,42 +791,163 @@ const notificationManager = new NotificationManager();
 window.NotificationManager = NotificationManager;
 window.notificationManager = notificationManager;
 
-// OneSignal fallback loading
-function loadOneSignalFallback() {
+// OneSignal integration with proper Safari PWA support
+function loadOneSignalIntegration() {
+  // Check if OneSignal is already loaded
   if (window.OneSignal) {
     console.log('[NM] OneSignal already loaded');
+    initializeOneSignal();
     return;
   }
 
-  // Try to load OneSignal with timeout
+  // Check for Safari iOS - OneSignal has limited support
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafariIOS = isSafari && isIOS;
+
+  if (isSafariIOS) {
+    console.log('[NM] Safari iOS detected - OneSignal has limited support, using enhanced fallback');
+    setupEnhancedSafariNotifications();
+    return;
+  }
+
+  // Load OneSignal SDK with proper error handling
   const script = document.createElement('script');
   script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
   script.defer = true;
 
-  script.onerror = function() {
-    console.warn('[NM] OneSignal CDN failed to load, using basic notifications');
+  // Set timeout for OneSignal loading
+  const onesignalTimeout = setTimeout(() => {
+    console.warn('[NM] OneSignal loading timeout - likely blocked by browser extension');
     showOneSignalBlockedMessage();
-    // Fallback to basic notification system
-    if (notificationManager) {
-      notificationManager.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-    }
+    setupEnhancedSafariNotifications();
+  }, 5000);
+
+  script.onload = function() {
+    clearTimeout(onesignalTimeout);
+    console.log('[NM] OneSignal SDK loaded successfully');
+    initializeOneSignal();
+  };
+
+  script.onerror = function() {
+    clearTimeout(onesignalTimeout);
+    console.error('[NM] OneSignal SDK failed to load - likely blocked by browser extension');
+    showOneSignalBlockedMessage();
+    setupEnhancedSafariNotifications();
   };
 
   document.head.appendChild(script);
+}
 
-  // Initialize OneSignal when available
+function initializeOneSignal() {
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(async function(OneSignal) {
     try {
+      // Configure OneSignal with proper Safari PWA settings
       await OneSignal.init({
         appId: "ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+        safari_web_id: "web.onesignal.auto.ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+        allowLocalhostAsSecureOrigin: true,
+        notifyButton: {
+          enable: true,
+          position: 'bottom-right',
+          size: 'medium',
+          theme: 'default',
+          offset: {
+            bottom: '20px',
+            right: '20px'
+          }
+        },
+        promptOptions: {
+          /* Example for customizing the prompt */
+          actionMessage: "We'd like to show you notifications for your classes and tasks.",
+          acceptButtonText: "ALLOW",
+          cancelButtonText: "NO THANKS"
+        }
       });
+
+      // Set up OneSignal event handlers
+      OneSignal.Notifications.addEventListener('click', (event) => {
+        console.log('[NM] OneSignal notification clicked:', event);
+        handleNotificationClick(event.notification);
+      });
+
+      OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
+        console.log('[NM] OneSignal notification will display:', event);
+        // You can prevent display and show your own UI here
+        // event.preventDefault();
+      });
+
       console.log('[NM] OneSignal initialized successfully');
+      window.notificationSystem = 'onesignal';
+
+      // Check if user is subscribed
+      const isSubscribed = await OneSignal.Notifications.permission;
+      console.log('[NM] OneSignal subscription status:', isSubscribed);
+
     } catch (error) {
       console.error('[NM] OneSignal initialization failed:', error);
       showOneSignalBlockedMessage();
+      setupEnhancedSafariNotifications();
     }
   });
+}
+
+function setupEnhancedSafariNotifications() {
+  console.log('[NM] Setting up enhanced Safari notification system');
+
+  // Mark that we're using fallback system
+  window.notificationSystem = 'safari-enhanced';
+
+  // Request notification permission if not already granted
+  if (Notification.permission === 'default') {
+    setTimeout(() => {
+      Notification.requestPermission().then(function(permission) {
+        if (permission === 'granted') {
+          console.log('[NM] Safari notification permission granted');
+        } else {
+          console.log('[NM] Safari notification permission denied');
+        }
+      });
+    }, 2000); // Delay to avoid being too aggressive
+  }
+
+  // Enhance the notification manager's Safari capabilities
+  if (window.notificationManager) {
+    // Reduce check interval for Safari to ensure timely notifications
+    if (window.notificationManager.safariCheckInterval) {
+      clearInterval(window.notificationManager.safariCheckInterval);
+    }
+
+    // More frequent checks for Safari
+    window.notificationManager.safariCheckInterval = setInterval(() => {
+      window.notificationManager.checkReminders();
+    }, 1 * 60 * 1000); // Check every 1 minute for Safari
+
+    console.log('[NM] Enhanced Safari notification system activated');
+  }
+}
+
+function handleNotificationClick(notification) {
+  console.log('[NM] Handling notification click:', notification);
+
+  // Focus the app window
+  if (window.focus) {
+    window.focus();
+  }
+
+  // Navigate based on notification type
+  const data = notification.additionalData || {};
+  if (data.url) {
+    // Navigate to the specified URL
+    window.location.href = data.url;
+  } else if (data.type === 'class') {
+    // Navigate to home or calendar view
+    window.location.href = '/html/home.html';
+  } else if (data.type === 'task') {
+    // Navigate to tasks view
+    window.location.href = '/html/home.html?view=tasks';
+  }
 }
 
 // Show user-friendly message when OneSignal is blocked
@@ -730,5 +1028,5 @@ function showOneSignalBlockedMessage() {
   }, 10000);
 }
 
-// Load OneSignal with delay to avoid ad blockers
-setTimeout(loadOneSignalFallback, 1000);
+// Load OneSignal integration with delay to avoid ad blockers
+setTimeout(loadOneSignalIntegration, 1000);

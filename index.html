@@ -414,51 +414,77 @@ body.dark input, body.dark textarea, body.dark select {
 }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- OneSignal SDK with fallback handling -->
+    <!-- OneSignal SDK with fallback handling - Updated for Safari PWA -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
-      // OneSignal loading with error handling and fallback
+      // OneSignal loading with error handling and fallback - Enhanced for Safari PWA
       function loadOneSignalWithFallback() {
+        // Check if we're on Safari iOS - OneSignal has limited support there
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isSafariIOS = isSafari && isIOS;
+
+        if (isSafariIOS) {
+          console.log('Safari iOS detected - OneSignal has limited support, using enhanced fallback notifications');
+          setupEnhancedFallbackNotifications();
+          return;
+        }
+
         // Set timeout for OneSignal loading
         const onesignalTimeout = setTimeout(() => {
           console.warn('OneSignal loading timeout - likely blocked by browser extension');
-          setupFallbackNotifications();
+          setupEnhancedFallbackNotifications();
         }, 5000);
 
-        // Try to load OneSignal
-        const script = document.createElement('script');
-        script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
-        script.defer = true;
+        // OneSignal initialization with Safari PWA support
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        window.OneSignalDeferred.push(async function(OneSignal) {
+          try {
+            await OneSignal.init({
+              appId: "ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+              safari_web_id: "web.onesignal.auto.ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
+              allowLocalhostAsSecureOrigin: true,
+              notifyButton: {
+                enable: true,
+                position: 'bottom-right',
+                size: 'medium',
+                theme: 'default',
+                offset: {
+                  bottom: '20px',
+                  right: '20px'
+                }
+              },
+              promptOptions: {
+                actionMessage: "Get reminders for your classes and tasks even when the app is closed.",
+                acceptButtonText: "ALLOW NOTIFICATIONS",
+                cancelButtonText: "NO THANKS"
+              }
+            });
+            console.log('OneSignal initialized successfully with Safari PWA support');
+            window.notificationSystem = 'onesignal';
 
-        script.onload = function() {
-          clearTimeout(onesignalTimeout);
-          console.log('OneSignal SDK loaded successfully');
+            // Set up OneSignal event handlers
+            OneSignal.Notifications.addEventListener('click', (event) => {
+              console.log('OneSignal notification clicked:', event);
+              if (event.notification && event.notification.data) {
+                const data = event.notification.data;
+                if (data.url) {
+                  window.location.href = data.url;
+                }
+              }
+            });
 
-          window.OneSignalDeferred = window.OneSignalDeferred || [];
-          OneSignalDeferred.push(async function(OneSignal) {
-            try {
-              await OneSignal.init({
-                appId: "ec449d4c-2a56-43a3-844a-9dbcb5a6de5f",
-              });
-              console.log('OneSignal initialized successfully');
-              window.notificationSystem = 'onesignal';
-            } catch (error) {
-              console.error('OneSignal initialization failed:', error);
-              setupFallbackNotifications();
-            }
-          });
-        };
-
-        script.onerror = function() {
-          clearTimeout(onesignalTimeout);
-          console.error('OneSignal SDK failed to load - likely blocked by browser extension');
-          setupFallbackNotifications();
-        };
-
-        document.head.appendChild(script);
+          } catch (error) {
+            console.error('OneSignal initialization failed:', error);
+            setupEnhancedFallbackNotifications();
+          } finally {
+            clearTimeout(onesignalTimeout);
+          }
+        });
       }
 
-      function setupFallbackNotifications() {
-        console.log('Setting up fallback notification system');
+      function setupEnhancedFallbackNotifications() {
+        console.log('Setting up enhanced fallback notification system for Safari PWA');
         window.notificationSystem = 'fallback';
 
         // Check if browser supports notifications
@@ -469,19 +495,35 @@ body.dark input, body.dark textarea, body.dark select {
               Notification.requestPermission().then(function(permission) {
                 if (permission === 'granted') {
                   console.log('Fallback notification permission granted');
+                } else if (permission === 'denied') {
+                  console.log('Fallback notification permission denied');
                 }
               });
+            } else if (Notification.permission === 'granted') {
+              console.log('Fallback notification permission already granted');
             }
           }
 
           // Request permission after a delay to avoid being too aggressive
-          setTimeout(requestNotificationPermission, 3000);
+          setTimeout(requestNotificationPermission, 2000);
         }
 
-        // Store fallback notification function
+        // Enhanced fallback notification function
         window.showFallbackNotification = function(title, options) {
           if ('Notification' in window && Notification.permission === 'granted') {
-            return new Notification(title, options);
+            try {
+              const notification = new Notification(title, options);
+
+              // Auto-close after 10 seconds if not clicked
+              setTimeout(() => {
+                notification.close();
+              }, 10000);
+
+              return notification;
+            } catch (error) {
+              console.error('Error showing fallback notification:', error);
+              return null;
+            }
           } else {
             console.log('Fallback notification not shown - permission not granted');
             return null;
