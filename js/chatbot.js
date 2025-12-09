@@ -1,32 +1,21 @@
-async function sendMessageToGemini(message) {
-  // Show loading indicator
-  addMessage('bot', '...');
+import { app, auth } from "./firebase-init.js";
 
-  try {
-    const response = await fetch("/api/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
-    });
+// Try to initialize AI, but gracefully handle if AI service is not available
+let model = null;
+let aiEnabled = false;
 
-    const data = await response.json();
+try {
+  // Switch to official Google Generative AI SDK for Gemini Developer API
+  const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
 
-    // Remove loading indicator
-    messages.removeChild(messages.lastChild);
-
-    if (data.text) {
-      addMessage("bot", data.text);
-    } else {
-      addMessage("bot", "AI service temporarily unavailable.");
-    }
-  } catch (err) {
-    console.error("Error calling Gemini API:", err);
-    // Remove loading indicator
-    messages.removeChild(messages.lastChild);
-    addMessage("bot", "AI service temporarily unavailable.");
-  }
+  // IMPORTANT: Replace YOUR_API_KEY with your actual API key from Google AI Studio
+  
+  model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  aiEnabled = true;
+  console.log('AI service initialized successfully using Gemini Developer API');
+} catch (error) {
+  console.warn('AI service not available, falling back to Dialogflow only:', error.message);
 }
-
 
 // Function to generate content using Gemini (exported for potential use elsewhere)
 export async function generateGeminiResponse(prompt) {
@@ -195,38 +184,28 @@ async function sendMessageToDialogflow(message) {
   }
 }
 
-/* SEND TO GEMINI: Use Firebase AI for general conversation */
+/* SEND TO GEMINI: Use API endpoint for general conversation */
 async function sendMessageToGemini(message) {
-  if (!aiEnabled || !model) {
-    // If AI is not available, inform user and route to Dialogflow instead
-    messages.removeChild(messages.lastChild);
-    addMessage('bot', 'AI service is currently unavailable. Please use "/" prefix for commands (e.g., /add class) or try again later.');
-    return;
-  }
-
   try {
-    console.log('Attempting to generate content with Gemini API...');
-    console.log('Model:', model);
-    console.log('Message:', message);
-    const result = await model.generateContent(message);
-    console.log('Gemini API call successful, result:', result);
-    const response = await result.response;
-    const text = response.text();
-    console.log('Gemini response text:', text);
+    const response = await fetch("/api/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
 
-    // Remove loading indicator and show AI response
+    const data = await response.json();
+    // Remove loading indicator
     messages.removeChild(messages.lastChild);
-    addMessage('bot', text);
+    if (data.text) {
+      addMessage("bot", data.text);
+    } else {
+      addMessage("bot", "AI service temporarily unavailable.");
+    }
   } catch (err) {
-    console.error('Gemini AI error details:');
-    console.error('Error message:', err.message);
-    console.error('Error status:', err.status);
-    console.error('Error code:', err.code);
-    console.error('Full error object:', err);
-    // Error handling - fallback to Dialogflow
+    console.error("Error calling Gemini API:", err);
+    // Remove loading indicator
     messages.removeChild(messages.lastChild);
-    addMessage('bot', 'AI service temporarily unavailable. Using basic chat mode.');
-    // Could optionally route to Dialogflow here as fallback
+    addMessage("bot", "AI service temporarily unavailable.");
   }
 }
 
