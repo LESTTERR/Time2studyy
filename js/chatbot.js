@@ -9,7 +9,7 @@ try {
   const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
 
   // IMPORTANT: Replace YOUR_API_KEY with your actual API key from Google AI Studio
-  
+  const ai = new GoogleGenerativeAI("AIzaSyA_buYh4vOkJTHT2_7u01SRdsQXKJ0AWKc");
   model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
   aiEnabled = true;
   console.log('AI service initialized successfully using Gemini Developer API');
@@ -184,28 +184,27 @@ async function sendMessageToDialogflow(message) {
   }
 }
 
-/* SEND TO GEMINI: Use API endpoint for general conversation */
+/* SEND TO GEMINI: Use Firebase AI for general conversation */
 async function sendMessageToGemini(message) {
-  try {
-    const response = await fetch("/api/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
-    });
+  if (!aiEnabled || !model) {
+    // If AI is not available, inform user and route to Dialogflow instead
+    messages.removeChild(messages.lastChild);
+    addMessage('bot', 'AI service is currently unavailable. Please use "/" prefix for commands (e.g., /add class) or try again later.');
+    return;
+  }
 
-    const data = await response.json();
-    // Remove loading indicator
+  try {
+    const result = await model.generateContent(message);
+    const response = await result.response;
+    const text = response.text();
+
+    // Remove loading indicator and show AI response
     messages.removeChild(messages.lastChild);
-    if (data.text) {
-      addMessage("bot", data.text);
-    } else {
-      addMessage("bot", "AI service temporarily unavailable.");
-    }
+    addMessage('bot', text);
   } catch (err) {
-    console.error("Error calling Gemini API:", err);
-    // Remove loading indicator
+    // Error handling
     messages.removeChild(messages.lastChild);
-    addMessage("bot", "AI service temporarily unavailable.");
+    addMessage('bot', 'Error connecting to Gemini AI.');
   }
 }
 
@@ -226,57 +225,4 @@ function addMessage(sender, text) {
 
   // Auto-scroll to bottom of messages
   messages.scrollTop = messages.scrollHeight;
-}
-
-/* Mobile keyboard handling - adjust chatbot position when keyboard appears */
-function setupMobileKeyboardHandling() {
- const userInput = document.getElementById('userInput');
- const chatbotWindow = document.getElementById('chatbot-window');
-
- if (!userInput || !chatbotWindow) return;
-
- // Check if we're on a mobile device
- const isMobile = window.innerWidth <= 768;
-
- if (isMobile) {
-   // Add event listeners for keyboard show/hide
-   userInput.addEventListener('focus', () => {
-     // When keyboard appears, adjust chatbot position
-     setTimeout(() => {
-       const keyboardHeight = window.innerHeight - document.documentElement.clientHeight;
-       if (keyboardHeight > 100) { // Keyboard is visible
-         chatbotWindow.style.bottom = `${keyboardHeight + 20}px`;
-         chatbotWindow.style.maxHeight = `calc(100vh - ${keyboardHeight + 100}px)`;
-       }
-     }, 300); // Delay to allow keyboard to fully appear
-   });
-
-   userInput.addEventListener('blur', () => {
-     // When keyboard disappears, reset chatbot position
-     setTimeout(() => {
-       chatbotWindow.style.bottom = 'calc(80px + env(safe-area-inset-bottom))';
-       chatbotWindow.style.maxHeight = 'calc(100vh - 160px - env(safe-area-inset-bottom))';
-     }, 300); // Delay to allow keyboard to fully disappear
-   });
-
-   // Also handle window resize events (orientation changes)
-   window.addEventListener('resize', () => {
-     if (document.activeElement === userInput) {
-       const keyboardHeight = window.innerHeight - document.documentElement.clientHeight;
-       if (keyboardHeight > 100) {
-         chatbotWindow.style.bottom = `${keyboardHeight + 20}px`;
-         chatbotWindow.style.maxHeight = `calc(100vh - ${keyboardHeight + 100}px)`;
-       }
-     }
-   });
- }
-}
-
-// Initialize mobile keyboard handling when chatbot is loaded
-if (typeof document !== 'undefined') {
- if (document.readyState === 'loading') {
-   document.addEventListener('DOMContentLoaded', setupMobileKeyboardHandling);
- } else {
-   setupMobileKeyboardHandling();
- }
 }
