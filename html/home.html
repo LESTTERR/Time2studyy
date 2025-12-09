@@ -1747,7 +1747,8 @@ function updateMotivationalContent(completed, total, recentTasks = [], recentCla
   // Sort by timestamp (newest first)
   allActivities.sort((a, b) => b.timestamp - a.timestamp);
 
-  const recentActivities = allActivities.slice(0, 5); // Last 5
+  const recentActivities = allActivities.slice(0, 2); // Last 2
+  const hasMoreActivities = allActivities.length > 2;
 
   if (recentActivities.length === 0) {
     activityListEl.innerHTML = '<p style="text-align: center; color: var(--subtext);">No recent activity</p>';
@@ -1774,6 +1775,79 @@ function updateMotivationalContent(completed, total, recentTasks = [], recentCla
 
       activityListEl.appendChild(activityItem);
     });
+
+    // Add "See More" button if there are more activities
+    if (hasMoreActivities) {
+      const seeMoreButton = document.createElement('button');
+      seeMoreButton.className = 'see-more-btn';
+      seeMoreButton.textContent = 'See More';
+      seeMoreButton.style.cssText = `
+        display: block;
+        margin: 10px auto 0;
+        padding: 8px 16px;
+        background-color: transparent;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background-color 0.2s;
+      `;
+
+      seeMoreButton.addEventListener('click', () => {
+        // Show all activities when "See More" is clicked
+        activityListEl.innerHTML = '';
+
+        allActivities.forEach(activity => {
+          const activityItem = document.createElement('div');
+          activityItem.className = 'activity-item';
+
+          if (activity.type === 'task') {
+            const task = activity.data;
+            const action = task.completed ? 'Completed' : 'Added';
+            const icon = task.completed ? '✅' : '➕';
+            activityItem.innerHTML = `
+              <div>${icon} ${action} ${task.type || 'Task'}: ${task.name}</div>
+              <div class="activity-time">${activity.timestamp.toLocaleDateString()}</div>
+            `;
+          } else if (activity.type === 'class') {
+            const cls = activity.data;
+            activityItem.innerHTML = `
+              <div>📚 Added Class: ${cls.name}</div>
+              <div class="activity-time">${activity.timestamp.toLocaleDateString()}</div>
+            `;
+          }
+
+          activityListEl.appendChild(activityItem);
+        });
+
+        // Add "Show Less" button
+        const showLessButton = document.createElement('button');
+        showLessButton.className = 'show-less-btn';
+        showLessButton.textContent = 'Show Less';
+        showLessButton.style.cssText = `
+          display: block;
+          margin: 10px auto 0;
+          padding: 8px 16px;
+          background-color: var(--secondary-color);
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          transition: background-color 0.2s;
+        `;
+
+        showLessButton.addEventListener('click', () => {
+          // Reload the dashboard to show only 2 activities again
+          updateMotivationalContent(completed, total, recentTasks, recentClasses);
+        });
+
+        activityListEl.appendChild(showLessButton);
+      });
+
+      activityListEl.appendChild(seeMoreButton);
+    }
   }
 }
 
