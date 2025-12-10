@@ -9,7 +9,7 @@ try {
   const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
 
   // IMPORTANT: Replace YOUR_API_KEY with your actual API key from Google AI Studio
-  const ai = new GoogleGenerativeAI("AIzaSyA5m9Amuu7FZeDB0hWVeCAcNmjVs4bvNOk");
+  const ai = new GoogleGenerativeAI("AIzaSyBkDhS14PMDzrNwOmek-V5hoWJw_Cy4sm4");
   model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
   aiEnabled = true;
   console.log('AI service initialized successfully using Gemini Developer API');
