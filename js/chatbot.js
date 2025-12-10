@@ -5,7 +5,7 @@ let model = null;
 let aiEnabled = false;
 
 try {
-  // Switch to official Google Generative AI SDK for Gemini Developer API
+  // Switch to official Google Generative AI SDK for Gemini Developer AP
   const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
 
   // IMPORTANT: Replace YOUR_API_KEY with your actual API key from Google AI Studio
