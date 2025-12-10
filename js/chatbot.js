@@ -6,8 +6,7 @@ export async function generateGeminiResponse(prompt) {
     const response = await fetch('https://frontendapichatbot.vercel.app/api/gemini', {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ prompt })
     });
@@ -179,8 +178,7 @@ async function sendMessageToDialogflow(message) {
     const response = await fetch('https://frontendapichatbot.vercel.app/api/dialogflow', {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ message, sessionId })
     });
@@ -208,13 +206,16 @@ async function sendMessageToGemini(message) {
     const response = await fetch('https://frontendapichatbot.vercel.app/api/gemini', {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ prompt: message })
     });
 
     if (!response.ok) {
+      // Check for CORS errors specifically
+      if (response.status === 0 || response.status === 'ERR_FAILED') {
+        throw new Error('CORS_ORIGIN_BLOCKED');
+      }
       const errorData = await response.json().catch(() => ({ error: 'Network error' }));
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
@@ -228,7 +229,15 @@ async function sendMessageToGemini(message) {
     // Error handling
     messages.removeChild(messages.lastChild);
     console.error('Gemini API Error:', err);
-    addMessage('bot', 'I\'m having trouble connecting to my AI brain right now. Please try again in a moment.');
+    
+    // Provide specific error messages for different scenarios
+    if (err.message === 'CORS_ORIGIN_BLOCKED') {
+      addMessage('bot', '🔧 Chatbot service is temporarily unavailable due to server configuration. Please try again later or contact support.');
+    } else if (err.message.includes('Failed to fetch')) {
+      addMessage('bot', '🌐 I\'m having trouble reaching my AI brain. Please check your internet connection and try again.');
+    } else {
+      addMessage('bot', 'I\'m having trouble connecting to my AI brain right now. Please try again in a moment.');
+    }
   }
 }
 
