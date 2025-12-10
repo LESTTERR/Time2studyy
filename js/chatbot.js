@@ -1,31 +1,17 @@
 import { app, auth } from "./firebase-init.js";
 
-// Try to initialize AI, but gracefully handle if AI service is not available
-let model = null;
-let aiEnabled = false;
 
-try {
-  // Switch to official Google Generative AI SDK for Gemini Developer API
-  const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
-
-  // IMPORTANT: Replace YOUR_API_KEY with your actual API key from Google AI Studio
-  const ai = new GoogleGenerativeAI("AIzaSyA_buYh4vOkJTHT2_7u01SRdsQXKJ0AWKc");
-  model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-  aiEnabled = true;
-  console.log('AI service initialized successfully using Gemini Developer API');
-} catch (error) {
-  console.warn('AI service not available, falling back to Dialogflow only:', error.message);
-}
-
-// Function to generate content using Gemini (exported for potential use elsewhere)
+// Function to generate content using Gemini via Vercel API (exported for potential use elsewhere)
 export async function generateGeminiResponse(prompt) {
-  if (!aiEnabled || !model) {
-    throw new Error('AI service not available');
-  }
-  
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const response = await fetch('https://frontendapichatbot.vercel.app/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    return data.reply;
   } catch (error) {
     console.error('Error generating Gemini response:', error);
     throw new Error('Failed to generate response from Gemini');
@@ -119,11 +105,11 @@ async function sendMessageToAI(message) {
       // Send other slash commands to Dialogflow for CRUD operations
       await sendMessageToDialogflow(message);
     } else {
-      // Send to Gemini for general conversation, fallback to Dialogflow if AI unavailable
-      if (aiEnabled) {
+      // Send to Gemini via Vercel API for general conversation, fallback to Dialogflow if API fails
+      try {
         await sendMessageToGemini(message);
-      } else {
-        // Fallback to Dialogflow for general conversation when AI is not available
+      } catch (err) {
+        // Fallback to Dialogflow for general conversation when Gemini API is not available
         await sendMessageToDialogflow(message);
       }
     }
@@ -184,23 +170,23 @@ async function sendMessageToDialogflow(message) {
   }
 }
 
-/* SEND TO GEMINI: Use Firebase AI for general conversation */
+/* SEND TO GEMINI: Use Vercel API for general conversation */
 async function sendMessageToGemini(message) {
-  if (!aiEnabled || !model) {
-    // If AI is not available, inform user and route to Dialogflow instead
-    messages.removeChild(messages.lastChild);
-    addMessage('bot', 'AI service is currently unavailable. Please use "/" prefix for commands (e.g., /add class) or try again later.');
-    return;
-  }
-
   try {
-    const result = await model.generateContent(message);
-    const response = await result.response;
-    const text = response.text();
+    const response = await fetch('https://frontendapichatbot.vercel.app/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: message })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'API error');
+    }
 
     // Remove loading indicator and show AI response
     messages.removeChild(messages.lastChild);
-    addMessage('bot', text);
+    addMessage('bot', data.reply);
   } catch (err) {
     // Error handling
     messages.removeChild(messages.lastChild);
