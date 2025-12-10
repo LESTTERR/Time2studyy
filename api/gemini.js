@@ -1,14 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export default async function handler(req, res) {
-  // Handle CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Handle CORS - Allow specific origin
+  res.setHeader('Access-Control-Allow-Origin', 'https://time2studyy.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
@@ -28,9 +28,9 @@ export default async function handler(req, res) {
     const response = await result.response;
     const text = response.text();
 
-    res.status(200).json({ reply: text });
+    return res.status(200).json({ reply: text });
   } catch (error) {
     console.error('Error generating Gemini response:', error);
-    res.status(500).json({ error: 'Failed to generate response' });
+    return res.status(500).json({ error: 'Failed to generate response' });
   }
 }
