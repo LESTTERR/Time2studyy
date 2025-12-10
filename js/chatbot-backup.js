@@ -1,14 +1,12 @@
 import { app, auth } from "./firebase-init.js";
 
+
 // Function to generate content using Gemini via Vercel API (exported for potential use elsewhere)
 export async function generateGeminiResponse(prompt) {
   try {
     const response = await fetch('https://frontendapichatbot.vercel.app/api/gemini', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
     const data = await response.json();
@@ -27,16 +25,6 @@ const closeBtn = document.getElementById('chatbot-close');
 const sendBtn = document.getElementById('chatbot-send');
 const input = document.getElementById('userInput');
 const messages = document.getElementById('messages');
-
-// Debug message logging - Reduced frequency
-let debugMessageCount = 0;
-function debugLog(message) {
-  debugMessageCount++;
-  // Only log every 10th message to reduce console spam
-  if (debugMessageCount % 10 === 0) {
-    console.log(`🔍 [AskAI Debug] ${message}`);
-  }
-}
 
 /* Show chatbot window: Click FAB to open chat */
 fab.onclick = () => {
@@ -77,17 +65,6 @@ sendBtn.onclick = sendMessage;
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter') sendMessage();
 });
-
-/* Enhanced event handling to prevent touch event issues */
-function preventDefaultTouchScroll(e) {
-  if (e.cancelable) {
-    e.preventDefault();
-  }
-}
-
-// Add touch event listeners with proper scrolling handling
-input.addEventListener('touchstart', preventDefaultTouchScroll, { passive: false });
-input.addEventListener('touchmove', preventDefaultTouchScroll, { passive: false });
 
 /* SEND MESSAGE: Process user input and route to appropriate AI */
 async function sendMessage() {
@@ -175,20 +152,12 @@ async function sendMessageToDialogflow(message) {
   const sessionId = auth.currentUser ? auth.currentUser.uid : 'guest';
 
   try {
-    // Call Dialogflow API endpoint with proper CORS handling
+    // Call Dialogflow API endpoint
     const response = await fetch('https://frontendapichatbot.vercel.app/api/dialogflow', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, sessionId })
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
     const data = await response.json();
 
     // Remove loading indicator and show AI response
@@ -197,8 +166,7 @@ async function sendMessageToDialogflow(message) {
   } catch (err) {
     // Error handling: Show error message if API fails
     messages.removeChild(messages.lastChild);
-    console.error('Dialogflow API Error:', err);
-    addMessage('bot', 'I\'m having trouble connecting right now. Please try again later.');
+    addMessage('bot', 'Error connecting to Dialogflow.');
   }
 }
 
@@ -207,19 +175,14 @@ async function sendMessageToGemini(message) {
   try {
     const response = await fetch('https://frontendapichatbot.vercel.app/api/gemini', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: message })
     });
+    const data = await response.json();
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Network error' }));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      throw new Error(data.error || 'API error');
     }
-
-    const data = await response.json();
 
     // Remove loading indicator and show AI response
     messages.removeChild(messages.lastChild);
@@ -227,8 +190,7 @@ async function sendMessageToGemini(message) {
   } catch (err) {
     // Error handling
     messages.removeChild(messages.lastChild);
-    console.error('Gemini API Error:', err);
-    addMessage('bot', 'I\'m having trouble connecting to my AI brain right now. Please try again in a moment.');
+    addMessage('bot', 'Error connecting to Gemini AI.');
   }
 }
 
@@ -249,7 +211,4 @@ function addMessage(sender, text) {
 
   // Auto-scroll to bottom of messages
   messages.scrollTop = messages.scrollHeight;
-  
-  // Debug logging (reduced frequency)
-  debugLog(`_msgList length: ${messages.children.length}`);
 }
